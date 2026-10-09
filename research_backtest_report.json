@@ -1,0 +1,24 @@
+{
+  "methodology": "CLOSED signals; next 5m OPEN with 0.03% adverse slippage per side, 0.06% taker fee each side, stop first on ambiguous bars, 1x maximum notional, 0.5% risk budget, funding/spread/latency not modeled.",
+  "data_source": "Bitget USDT-FUTURES public historical candles (not Binance spot)",
+  "reproducible_code": "research_backtest.py",
+  "asof_utc": "2026-10-09T15:00:00+00:00",
+  "date_span": {
+    "start": "2026-06-11T15:00:00+00:00",
+    "warmup_end": "2026-07-21T15:00:00+00:00",
+    "split": "2026-09-07T12:00:00+00:00"
+  },
+  "cost_assumptions": {
+    "fee_each_side": 0.0006,
+    "slippage_each_side": 0.0003,
+    "funding_included": false
+  },
+  "train": [],
+  "test": [],
+  "metadata": {},
+  "errors": [
+    "BTCUSDT: RuntimeError: Candle gaps: BTCUSDT 5m first=(1781246400000, 1781247000000) count=171",
+    "ETHUSDT: RuntimeError: Candle gaps: ETHUSDT 5m first=(1781246400000, 1781247000000) count=171"
+  ],
+  "completed": false
+}
