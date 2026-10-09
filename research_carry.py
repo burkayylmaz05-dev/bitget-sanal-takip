@@ -159,7 +159,6 @@ def simulate(spot,futures,rates,method,start,end):
         capital+=pnl
         fee_total+=cost
         basis_total+=gross_spot+gross_perp
-        funding_received+=0 if False else 0 # funding already tracked in outer scope
         trades.append({'open':p['time'],'close':t,'reason':reason,'net':round(pnl,4),
                        'funding':round(p['funding'],4),'basis_pnl':round(gross_spot+gross_perp,4),
                        'fees':round(cost,4)})
