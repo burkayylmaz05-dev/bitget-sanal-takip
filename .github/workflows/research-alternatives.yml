@@ -1,0 +1,57 @@
+name: Bitget Alternative Strategies Cost-Aware Validation
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_alternatives.py
+      - .github/workflows/research-alternatives.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-alternatives
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ALT_RESEARCH_DAYS: '240'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Static source compilation
+        run: python3 -m py_compile research_alternatives.py research_backtest.py pc_zaman_dilimleri.py
+      - name: Run 7 pre-registered strategy families on Bitget historical candles
+        id: validate
+        continue-on-error: true
+        run: python3 -u research_alternatives.py
+      - name: Preserve research JSON artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitget-seven-strategy-validation
+          path: research_alternatives_report.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Publish evidence in repository
+        if: always()
+        run: |
+          if test -f research_alternatives_report.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add research_alternatives_report.json
+            if ! git diff --cached --quiet; then
+              git commit -m "Publish alternative strategy results [skip ci]"
+              for attempt in 1 2 3 4; do
+                git push && break
+                git pull --rebase
+              done
+            fi
+          fi
+      - name: Fail if historical validation incomplete
+        if: steps.validate.outcome != 'success'
+        run: exit 1
