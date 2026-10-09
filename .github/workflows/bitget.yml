@@ -1,6 +1,8 @@
 name: Bitget BTC ETH Sanal Takip (ucretsiz)
 
 'on':
+  push:
+    branches: [main]
   schedule:
     # GitHub scheduler best-effort, can delay or skip runs
     - cron: '3-58/5 * * * *'
