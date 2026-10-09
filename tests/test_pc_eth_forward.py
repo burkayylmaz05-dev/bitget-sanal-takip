@@ -105,6 +105,23 @@ class ForwardPaperTests(unittest.TestCase):
         self.assertIsNone(self.experiment.state['open'])
         self.assertEqual(self.experiment.state['last_hour'],12*HOUR)
 
+    def test_waits_for_latest_closed_4h_data_at_hour_boundary(self):
+        now = 16*HOUR+10_000
+        e = forward.PaperExperiment(
+            16*HOUR-60_000, self.experiment.state_file, self.experiment.history_file)
+        data=rows(15*HOUR)
+        # At 16:00 latest CLOSED 4H candle should have opened at 12:00.
+        data['4H']=[(8*HOUR,100,110,95,101,1)]
+        with patch.object(forward,'evaluate_signal') as sig:
+            self.assertEqual(e.on_market(data,now,eth_price=100.,eth_quote_ms=now),[])
+            sig.assert_not_called()
+        self.assertLess(e.state['last_hour'],15*HOUR)
+        data['4H']=[(12*HOUR,100,110,95,101,1)]
+        with patch.object(forward,'evaluate_signal',return_value=(None,'no signal')) as sig:
+            e.on_market(data,now+12_000,eth_price=100.,eth_quote_ms=now+12_000)
+            sig.assert_called_once()
+        self.assertEqual(e.state['last_hour'],15*HOUR)
+
     def test_old_signal_ignored_after_offline_time(self):
         now=13*HOUR+180_000
         with patch.object(forward,'evaluate_signal') as signal:
