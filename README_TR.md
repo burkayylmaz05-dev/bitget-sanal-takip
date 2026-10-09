@@ -6,13 +6,13 @@ Depo: `burkayylmaz05-dev/bitget-sanal-takip`.
 
 ## Kurulum tamamlanma durumu
 
-ChatGPT tarafından kod ve zamanlanmış GitHub Actions iş akışı yüklenmiştir. Ancak bildirimlerin çalışabilmesi için, **hesap sahibi** GitHub Actions Secrets altına aşağıdaki iki değeri bir defa eklemelidir. Değerleri **sohbette paylaşma**, dosyaya yazma, README'ye yapıştırma:
+ChatGPT tarafından kod ve zamanlanmış GitHub Actions iş akışı yüklenmiştir. **Sanal test Telegram anahtarı olmadan da başlar.** Telefona mesaj almak istersen **hesap sahibi** Actions Secrets altına aşağıdaki iki değeri bir defa eklemelidir. Değerleri **sohbette paylaşma**, dosyaya yazma, README'ye yapıştırma:
 
 1. GitHub → bu depo → Settings → Secrets and variables → Actions → New repository secret
 2. `TELEGRAM_BOT_TOKEN`: mevcut Telegram botu gizli anahtarı
 3. `TELEGRAM_CHAT_ID`: kendi sohbet kimliğin
 
-Ayarları ekledikten sonra GitHub → Actions → **Bitget BTC ETH Sanal Takip (ucretsiz)** → Run workflow ile ilk çalıştırmayı denetle.
+İstersen GitHub → Actions → **Bitget BTC ETH Sanal Takip (ucretsiz)** → Run workflow ile ilk çalıştırmayı beklemeden başlatabilirsin. Zamanlanmış çalıştırma da kendi kendine başlayacaktır.
 
 ## İçerik
 
@@ -28,7 +28,7 @@ Her A/B stratejisi 1.000 USDT sanal bakiye ile başlar. Kullanılan komisyon, ka
 
 - GitHub Actions zamanlanmış işler gecikebilir veya atlanabilir; **kesintisiz 7/24 ve tam beş dakika garantisi yoktur.**
 - Public depoda tüm kod ve sanal işlem günlükleri görülebilir; Telegram Secrets değerleri görülemez.
-- Sürekli iş akışı ve bildirimler ancak hesap sahibi Secrets değerlerini kaydettiğinde çalışabilir. Secrets olmadan izleme **güvenli biçimde durur**.
+- Sanal izleme, Secrets olmadan çalışır ve açık depo içinde kayıt yapar. Secrets olmadan **yalnızca Telegram bildirimleri gönderilmez**.
 - İşlem günlüğü açık depoda tutulacağı için kişisel veri / özel anahtar konmamalıdır.
 - GitHub Actions 60 gün etkin olmayan açık depolardaki schedule tetikleyicilerini devre dışı bırakabilir.
 - V2 ve V3 raporları ayrı tutulur. Bilgisayarda aynı Telegram botunu aynı anda çalıştırmak çift bildirim üretebilir.
