@@ -18,20 +18,25 @@ except ImportError:
     sys.exit('websocket-client eksik. PC_BASLAT.bat dosyasini calistirin.')
 
 import bitget_sinyal_takip as engine
+import pc_zaman_dilimleri as multi
 
 ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / 'pc_telegram_ayar.json'
 STATE_FILE = ROOT / 'pc_canli_durum.json'
 WS_URL = 'wss://ws.bitget.com/v2/ws/public'
 SYMBOLS = ('BTCUSDT', 'ETHUSDT')
-CANDLE_MS = 300_000
+CANDLE_MS = multi.TF_MS['5m']
 CLOSE_DELAY_MS = 5_000
 MAX_SIGNAL_AGE_MS = 90_000
+FRAMES = multi.FRAMES
 
 
-def closed_bar(now_ms):
-    """UTC timestamp of opening of latest 5m candle closed >=5s ago."""
-    return ((now_ms - CLOSE_DELAY_MS) // CANDLE_MS - 1) * CANDLE_MS
+def signal_key(symbol, timeframe):
+    return f'{symbol}:{timeframe}'
+
+
+def closed_bar(now_ms, timeframe='5m'):
+    return multi.closed_bar(now_ms, timeframe, CLOSE_DELAY_MS)
 
 
 def load_state(now_ms):
