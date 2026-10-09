@@ -22,8 +22,8 @@ def main():
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat = os.environ.get("TELEGRAM_CHAT_ID")
     if not token or not chat:
-        print("Telegram GitHub Secrets eksik")
-        return 2
+        print("Telegram Secrets eklenmedi; sanal test devam eder, bildirim kapali.")
+        return 0
     todo = load_pending()
     count = 0
     while todo and count < 20:
