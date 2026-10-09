@@ -29,17 +29,20 @@ jobs:
       - name: Verify bot safety and unit tests
         run: python3 -m unittest discover -s tests -v
       - name: Verify Telegram connection and send one test notification
-        if: github.event_name != 'schedule'
+        if: github.event_name == 'workflow_dispatch'
         run: python3 github_telegram_test.py
       - name: Check market and queue notifications (never orders)
         id: poll
         continue-on-error: true
         run: python3 github_runner.py
+      - name: Record first actual automated schedule (once)
+        if: github.event_name == 'schedule' && steps.poll.outcome == 'success'
+        run: python3 github_schedule_probe.py
       - name: Persist paper state before any notification
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for path in bitget_sinyal_v2_durum.json bitget_v3_ab_durum.json bildirim_kuyrugu.json bitget_sanal_islemler_v2.jsonl bitget_v3_ab_islemler.jsonl bitget_v3_ab_rapor.txt; do
+          for path in bitget_sinyal_v2_durum.json bitget_v3_ab_durum.json bildirim_kuyrugu.json bitget_sanal_islemler_v2.jsonl bitget_v3_ab_islemler.jsonl bitget_v3_ab_rapor.txt github_schedule_verified.json; do
             if test -f "$path"; then git add -f -- "$path"; fi
           done
           if ! git diff --cached --quiet; then
