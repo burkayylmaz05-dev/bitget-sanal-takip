@@ -1,0 +1,27 @@
+BITGET BTCUSDT | A/B SANAL ILERI TEST v3
+Modeller 4H kapanmis mum sinyalleriyle izlenir; 5 dk aralikla kontrol edilir.
+Her stratejinin baslangic sanal bakiyesi 1000 USDT; birbirinden bagimsiz.
+Gercek emir yok. Varsayimlar: %0.06 taker + %0.03 kayma (her yon),
+islem basina yaklasik %0.5 risk, maksimum 1x pozisyon, stop 2 ATR, hedef 4 ATR.
+Funding: Bitget resmi tarihsel oran; kapanmis 5m fiyat ile YAKLASIK mark degeri.
+Bu ileri test borsada gerceklesen islem degildir. Fiyat kaymasi ve
+likidasyon farklari olabilir. Yuzdeler gelecek kazanc vaadi degildir.
+Test baslangici (UTC): 2026-10-09T13:06:01.401043+00:00
+Rapor (UTC): 2026-10-09T13:06:01.951372+00:00
+
+A / EMA 50-200:
+   Gerceklesen sanal bakiye: 1000.00 USDT (+0.00%)
+   Kapanan islem: 0 | Kazanc: 0 | Zarar: 0
+   Gecersiz/veri boslugu: 0
+   Yaklasik funding net toplam: +0.000 USDT
+   Acik islem: YOK
+
+B / EMA 20-50-200:
+   Gerceklesen sanal bakiye: 1000.00 USDT (+0.00%)
+   Kapanan islem: 0 | Kazanc: 0 | Zarar: 0
+   Gecersiz/veri boslugu: 0
+   Yaklasik funding net toplam: +0.000 USDT
+   Acik islem: YOK
+
+Not: Acik pozisyonlarin piyasa degeri, gerceklesmis nakit bakiyeye dahil degildir.
+Sonuclar karar vermek icin yeterli islem sayisina ulasana dek aday durumundadir.

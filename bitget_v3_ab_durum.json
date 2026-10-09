@@ -1,0 +1,28 @@
+{
+  "version": 3,
+  "primed_4h": 1791532800000,
+  "started_utc": "2026-10-09T13:06:01.401043+00:00",
+  "accounts": {
+    "EMA_50_200": {
+      "cash": 1000.0,
+      "position": null,
+      "closed": 0,
+      "wins": 0,
+      "losses": 0,
+      "invalid": 0,
+      "funding_approx_usdt": 0.0,
+      "fees_and_slip_estimated": true
+    },
+    "EMA_20_50_200": {
+      "cash": 1000.0,
+      "position": null,
+      "closed": 0,
+      "wins": 0,
+      "losses": 0,
+      "invalid": 0,
+      "funding_approx_usdt": 0.0,
+      "fees_and_slip_estimated": true
+    }
+  },
+  "last_report_week": null
+}
