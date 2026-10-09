@@ -2,10 +2,10 @@
   "methodology": "CLOSED signals; next 5m OPEN with 0.03% adverse slippage per side, 0.06% taker fee each side, stop first on ambiguous bars, 1x maximum notional, 0.5% risk budget, funding/spread/latency not modeled.",
   "data_source": "Bitget USDT-FUTURES public historical candles (not Binance spot)",
   "reproducible_code": "research_backtest.py",
-  "asof_utc": "2026-10-09T15:00:00+00:00",
+  "asof_utc": "2026-10-09T15:05:00+00:00",
   "date_span": {
-    "start": "2026-06-11T15:00:00+00:00",
-    "warmup_end": "2026-07-21T15:00:00+00:00",
+    "start": "2026-06-11T15:05:00+00:00",
+    "warmup_end": "2026-07-21T15:05:00+00:00",
     "split": "2026-09-07T12:00:00+00:00"
   },
   "cost_assumptions": {
@@ -13,12 +13,648 @@
     "slippage_each_side": 0.0003,
     "funding_included": false
   },
-  "train": [],
-  "test": [],
-  "metadata": {},
-  "errors": [
-    "BTCUSDT: RuntimeError: Candle gaps: BTCUSDT 5m first=(1781246400000, 1781247000000) count=171",
-    "ETHUSDT: RuntimeError: Candle gaps: ETHUSDT 5m first=(1781246400000, 1781247000000) count=171"
+  "train": [
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "5m",
+      "days": 47.9,
+      "signals": 58,
+      "closed_trades": 34,
+      "winners": 11,
+      "win_rate": 32.35,
+      "net_usdt": -18.555,
+      "return_pct": -1.856,
+      "max_drawdown_pct": -2.335,
+      "profit_factor": 0.71,
+      "example_trades": [
+        {
+          "entry_utc": 1784662800000,
+          "exit_utc": 1784666400000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -2.28797,
+          "notional": 1000.0
+        },
+        {
+          "entry_utc": 1785758400000,
+          "exit_utc": 1785761100000,
+          "result": "STOP",
+          "direction": "SHORT",
+          "pnl": -5.3522,
+          "notional": 997.71
+        },
+        {
+          "entry_utc": 1786104900000,
+          "exit_utc": 1786108500000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -1.7416,
+          "notional": 992.36
+        }
+      ]
+    },
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "15m",
+      "days": 47.9,
+      "signals": 27,
+      "closed_trades": 18,
+      "winners": 6,
+      "win_rate": 33.33,
+      "net_usdt": -5.138,
+      "return_pct": -0.514,
+      "max_drawdown_pct": -2.372,
+      "profit_factor": 0.888,
+      "example_trades": [
+        {
+          "entry_utc": 1784678400000,
+          "exit_utc": 1784689200000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -4.80806,
+          "notional": 867.06
+        },
+        {
+          "entry_utc": 1784738700000,
+          "exit_utc": 1784749500000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -3.76756,
+          "notional": 458.68
+        },
+        {
+          "entry_utc": 1784765700000,
+          "exit_utc": 1784770200000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -6.26833,
+          "notional": 877.22
+        }
+      ]
+    },
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "1H",
+      "days": 47.9,
+      "signals": 11,
+      "closed_trades": 8,
+      "winners": 2,
+      "win_rate": 25.0,
+      "net_usdt": -16.442,
+      "return_pct": -1.644,
+      "max_drawdown_pct": -1.644,
+      "profit_factor": 0.292,
+      "example_trades": [
+        {
+          "entry_utc": 1785729600000,
+          "exit_utc": 1785767400000,
+          "result": "STOP",
+          "direction": "SHORT",
+          "pnl": -5.50065,
+          "notional": 330.72
+        },
+        {
+          "entry_utc": 1786104000000,
+          "exit_utc": 1786147200000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -1.19703,
+          "notional": 367.74
+        },
+        {
+          "entry_utc": 1786716000000,
+          "exit_utc": 1786759200000,
+          "result": "TIME",
+          "direction": "SHORT",
+          "pnl": -2.56978,
+          "notional": 336.39
+        }
+      ]
+    },
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "4H",
+      "days": 47.9,
+      "signals": 1,
+      "closed_trades": 1,
+      "winners": 0,
+      "win_rate": 0.0,
+      "net_usdt": -3.109,
+      "return_pct": -0.311,
+      "max_drawdown_pct": -0.311,
+      "profit_factor": 0.0,
+      "example_trades": [
+        {
+          "entry_utc": 1784649600000,
+          "exit_utc": 1784822400000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -3.10901,
+          "notional": 113.68
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "5m",
+      "days": 47.9,
+      "signals": 75,
+      "closed_trades": 50,
+      "winners": 15,
+      "win_rate": 30.0,
+      "net_usdt": -82.973,
+      "return_pct": -8.297,
+      "max_drawdown_pct": -8.297,
+      "profit_factor": 0.384,
+      "example_trades": [
+        {
+          "entry_utc": 1784695500000,
+          "exit_utc": 1784697600000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -6.18106,
+          "notional": 790.47
+        },
+        {
+          "entry_utc": 1784738100000,
+          "exit_utc": 1784741100000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -5.68307,
+          "notional": 479.02
+        },
+        {
+          "entry_utc": 1784766300000,
+          "exit_utc": 1784769300000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -6.18648,
+          "notional": 833.6
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "15m",
+      "days": 47.9,
+      "signals": 44,
+      "closed_trades": 36,
+      "winners": 12,
+      "win_rate": 33.33,
+      "net_usdt": -44.335,
+      "return_pct": -4.433,
+      "max_drawdown_pct": -4.576,
+      "profit_factor": 0.379,
+      "example_trades": [
+        {
+          "entry_utc": 1784678400000,
+          "exit_utc": 1784689200000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -1.18476,
+          "notional": 673.91
+        },
+        {
+          "entry_utc": 1784727900000,
+          "exit_utc": 1784738700000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": 2.12037,
+          "notional": 392.57
+        },
+        {
+          "entry_utc": 1784798100000,
+          "exit_utc": 1784808900000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -2.60043,
+          "notional": 570.84
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "1H",
+      "days": 47.9,
+      "signals": 11,
+      "closed_trades": 7,
+      "winners": 3,
+      "win_rate": 42.86,
+      "net_usdt": 1.113,
+      "return_pct": 0.111,
+      "max_drawdown_pct": -1.483,
+      "profit_factor": 1.075,
+      "example_trades": [
+        {
+          "entry_utc": 1786201200000,
+          "exit_utc": 1786239000000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -6.38549,
+          "notional": 926.77
+        },
+        {
+          "entry_utc": 1786982400000,
+          "exit_utc": 1787021100000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -5.60928,
+          "notional": 430.51
+        },
+        {
+          "entry_utc": 1787493600000,
+          "exit_utc": 1787536800000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -1.66598,
+          "notional": 115.97
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "4H",
+      "days": 47.9,
+      "signals": 4,
+      "closed_trades": 3,
+      "winners": 1,
+      "win_rate": 33.33,
+      "net_usdt": -0.801,
+      "return_pct": -0.08,
+      "max_drawdown_pct": -0.191,
+      "profit_factor": 0.6,
+      "example_trades": [
+        {
+          "entry_utc": 1785960000000,
+          "exit_utc": 1786132800000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -0.08593,
+          "notional": 139.53
+        },
+        {
+          "entry_utc": 1786939200000,
+          "exit_utc": 1787112000000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": 1.19959,
+          "notional": 294.17
+        },
+        {
+          "entry_utc": 1788451200000,
+          "exit_utc": 1788624000000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -1.91446,
+          "notional": 77.87
+        }
+      ]
+    }
   ],
-  "completed": false
+  "test": [
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "5m",
+      "days": 32.1,
+      "signals": 35,
+      "closed_trades": 23,
+      "winners": 8,
+      "win_rate": 34.78,
+      "net_usdt": -20.886,
+      "return_pct": -2.089,
+      "max_drawdown_pct": -2.298,
+      "profit_factor": 0.547,
+      "example_trades": [
+        {
+          "entry_utc": 1789758900000,
+          "exit_utc": 1789762500000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -3.36963,
+          "notional": 961.34
+        },
+        {
+          "entry_utc": 1789778100000,
+          "exit_utc": 1789781700000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -3.28189,
+          "notional": 883.4
+        },
+        {
+          "entry_utc": 1789920900000,
+          "exit_utc": 1789924500000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -0.68662,
+          "notional": 766.5
+        }
+      ]
+    },
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "15m",
+      "days": 32.1,
+      "signals": 18,
+      "closed_trades": 12,
+      "winners": 1,
+      "win_rate": 8.33,
+      "net_usdt": -24.934,
+      "return_pct": -2.493,
+      "max_drawdown_pct": -2.493,
+      "profit_factor": 0.267,
+      "example_trades": [
+        {
+          "entry_utc": 1789806600000,
+          "exit_utc": 1789817400000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -2.12516,
+          "notional": 1000.0
+        },
+        {
+          "entry_utc": 1789828200000,
+          "exit_utc": 1789839000000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -2.24741,
+          "notional": 970.24
+        },
+        {
+          "entry_utc": 1789950600000,
+          "exit_utc": 1789961400000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -2.20688,
+          "notional": 408.53
+        }
+      ]
+    },
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "1H",
+      "days": 32.1,
+      "signals": 10,
+      "closed_trades": 6,
+      "winners": 4,
+      "win_rate": 66.67,
+      "net_usdt": 8.854,
+      "return_pct": 0.885,
+      "max_drawdown_pct": -0.545,
+      "profit_factor": 1.808,
+      "example_trades": [
+        {
+          "entry_utc": 1788944400000,
+          "exit_utc": 1788966600000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -5.45184,
+          "notional": 304.26
+        },
+        {
+          "entry_utc": 1789952400000,
+          "exit_utc": 1789979700000,
+          "result": "TARGET",
+          "direction": "LONG",
+          "pnl": 10.11078,
+          "notional": 333.27
+        },
+        {
+          "entry_utc": 1790467200000,
+          "exit_utc": 1790510400000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": 2.34876,
+          "notional": 660.13
+        }
+      ]
+    },
+    {
+      "symbol": "BTCUSDT",
+      "timeframe": "4H",
+      "days": 32.1,
+      "signals": 1,
+      "closed_trades": 1,
+      "winners": 0,
+      "win_rate": 0.0,
+      "net_usdt": -1.975,
+      "return_pct": -0.198,
+      "max_drawdown_pct": -0.198,
+      "profit_factor": 0.0,
+      "example_trades": [
+        {
+          "entry_utc": 1790928000000,
+          "exit_utc": 1791100800000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -1.97538,
+          "notional": 146.01
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "5m",
+      "days": 32.1,
+      "signals": 43,
+      "closed_trades": 31,
+      "winners": 7,
+      "win_rate": 22.58,
+      "net_usdt": -51.197,
+      "return_pct": -5.12,
+      "max_drawdown_pct": -5.12,
+      "profit_factor": 0.365,
+      "example_trades": [
+        {
+          "entry_utc": 1788942600000,
+          "exit_utc": 1788945900000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -6.44227,
+          "notional": 964.63
+        },
+        {
+          "entry_utc": 1788959700000,
+          "exit_utc": 1788961200000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -6.29944,
+          "notional": 890.85
+        },
+        {
+          "entry_utc": 1789404900000,
+          "exit_utc": 1789408500000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -0.86001,
+          "notional": 407.4
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "15m",
+      "days": 32.1,
+      "signals": 23,
+      "closed_trades": 17,
+      "winners": 5,
+      "win_rate": 29.41,
+      "net_usdt": -19.314,
+      "return_pct": -1.931,
+      "max_drawdown_pct": -2.624,
+      "profit_factor": 0.579,
+      "example_trades": [
+        {
+          "entry_utc": 1788786900000,
+          "exit_utc": 1788789900000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -5.76707,
+          "notional": 514.44
+        },
+        {
+          "entry_utc": 1788831000000,
+          "exit_utc": 1788837600000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -5.71625,
+          "notional": 499.77
+        },
+        {
+          "entry_utc": 1789195500000,
+          "exit_utc": 1789206300000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": 3.53511,
+          "notional": 988.52
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "1H",
+      "days": 32.1,
+      "signals": 5,
+      "closed_trades": 4,
+      "winners": 1,
+      "win_rate": 25.0,
+      "net_usdt": -11.454,
+      "return_pct": -1.145,
+      "max_drawdown_pct": -1.145,
+      "profit_factor": 0.036,
+      "example_trades": [
+        {
+          "entry_utc": 1788930000000,
+          "exit_utc": 1788967200000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -5.53586,
+          "notional": 360.28
+        },
+        {
+          "entry_utc": 1790474400000,
+          "exit_utc": 1790517600000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": 0.43246,
+          "notional": 347.53
+        },
+        {
+          "entry_utc": 1790931600000,
+          "exit_utc": 1790955600000,
+          "result": "STOP",
+          "direction": "LONG",
+          "pnl": -5.30451,
+          "notional": 223.03
+        }
+      ]
+    },
+    {
+      "symbol": "ETHUSDT",
+      "timeframe": "4H",
+      "days": 32.1,
+      "signals": 2,
+      "closed_trades": 2,
+      "winners": 0,
+      "win_rate": 0.0,
+      "net_usdt": -3.898,
+      "return_pct": -0.39,
+      "max_drawdown_pct": -0.39,
+      "profit_factor": 0.0,
+      "example_trades": [
+        {
+          "entry_utc": 1789142400000,
+          "exit_utc": 1789315200000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -2.34681,
+          "notional": 82.6
+        },
+        {
+          "entry_utc": 1790683200000,
+          "exit_utc": 1790856000000,
+          "result": "TIME",
+          "direction": "LONG",
+          "pnl": -1.55158,
+          "notional": 139.74
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "BTCUSDT": {
+      "5m": {
+        "candles": 34560,
+        "calls": 173,
+        "first": 1781190300000,
+        "last": 1791558000000
+      },
+      "15m": {
+        "candles": 11519,
+        "calls": 58,
+        "first": 1781190900000,
+        "last": 1791557100000
+      },
+      "1H": {
+        "candles": 2879,
+        "calls": 15,
+        "first": 1781193600000,
+        "last": 1791554400000
+      },
+      "4H": {
+        "candles": 719,
+        "calls": 4,
+        "first": 1781193600000,
+        "last": 1791532800000
+      }
+    },
+    "ETHUSDT": {
+      "5m": {
+        "candles": 34560,
+        "calls": 173,
+        "first": 1781190300000,
+        "last": 1791558000000
+      },
+      "15m": {
+        "candles": 11519,
+        "calls": 58,
+        "first": 1781190900000,
+        "last": 1791557100000
+      },
+      "1H": {
+        "candles": 2879,
+        "calls": 15,
+        "first": 1781193600000,
+        "last": 1791554400000
+      },
+      "4H": {
+        "candles": 719,
+        "calls": 4,
+        "first": 1781193600000,
+        "last": 1791532800000
+      }
+    }
+  },
+  "errors": [],
+  "completed": true
 }
