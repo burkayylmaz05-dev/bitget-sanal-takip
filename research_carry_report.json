@@ -22,7 +22,7 @@
   "sources": {},
   "results": {},
   "errors": [
-    "BTCUSDT: RuntimeError: BTCUSDT funding insufficient coverage, 270 records",
-    "ETHUSDT: RuntimeError: ETHUSDT funding insufficient coverage, 270 records"
+    "BTCUSDT: RuntimeError: BTCUSDT funding insufficient coverage, 270 records, first=1783785600000, expected start=1770822000000",
+    "ETHUSDT: RuntimeError: ETHUSDT funding insufficient coverage, 270 records, first=1783785600000, expected start=1770822000000"
   ]
 }
