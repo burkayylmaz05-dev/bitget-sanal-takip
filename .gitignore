@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.zip
+.env
+bitget_telegram_ayar.json
+*.key
+*.pem
