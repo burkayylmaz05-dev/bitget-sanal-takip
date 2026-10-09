@@ -230,6 +230,11 @@ class PaperExperiment:
         if one[-1][0] != current_hour:
             # Let API catch up on next polling pass.
             return notifications
+        # At each 1H decision use the most recently CLOSED 4H candle.
+        # If it just closed but Bitget API still lags, DO NOT use an older bar.
+        expected_four = (decision // FOUR) * FOUR - FOUR
+        if not four or four[-1][0] != expected_four:
+            return notifications
         self.state['last_hour'] = current_hour
         self.save()
         if self.state['open']:
