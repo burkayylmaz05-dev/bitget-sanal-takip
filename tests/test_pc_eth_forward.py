@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pc_eth_forward as forward
 
 HOUR = forward.HOUR
+FOUR = forward.FOUR
 FIVE = forward.FIVE
 
 
