@@ -16,10 +16,11 @@ if errorlevel 1 (
     exit /b 1
 )
 echo Bitget botu kontrol ediliyor...
-powershell -NoProfile -Command "$ErrorActionPreference='Stop'; $base='https://raw.githubusercontent.com/burkayylmaz05-dev/bitget-sanal-takip/main/'; Invoke-WebRequest ($base+'pc_canli_bot.py') -OutFile 'pc_canli_bot.py'; Invoke-WebRequest ($base+'bitget_sinyal_takip.py') -OutFile 'bitget_sinyal_takip.py'"
+powershell -NoProfile -Command "$ErrorActionPreference='Stop'; $base='https://raw.githubusercontent.com/burkayylmaz05-dev/bitget-sanal-takip/main/'; Invoke-WebRequest ($base+'pc_canli_bot.py') -OutFile 'pc_canli_bot.py'; Invoke-WebRequest ($base+'bitget_sinyal_takip.py') -OutFile 'bitget_sinyal_takip.py'; Invoke-WebRequest ($base+'pc_zaman_dilimleri.py') -OutFile 'pc_zaman_dilimleri.py'"
 if errorlevel 1 (
     if not exist pc_canli_bot.py goto :fail
     if not exist bitget_sinyal_takip.py goto :fail
+    if not exist pc_zaman_dilimleri.py goto :fail
     echo Guncelleme alinamadi, mevcut dosyalarla devam ediliyor.
 )
 %PY% -c "import websocket; assert hasattr(websocket, 'WebSocketApp')" >nul 2>&1
