@@ -1,0 +1,57 @@
+name: Bitget Funding Carry Neutral Research
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_carry.py
+      - .github/workflows/research-carry.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-carry
+  cancel-in-progress: false
+
+jobs:
+  run-carry-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CARRY_DAYS: '240'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate Python syntax
+        run: python3 -m py_compile research_carry.py
+      - name: Simulate BTC/ETH Spot Long Perp Short Carry on Bitget 1h history
+        id: simulate
+        continue-on-error: true
+        run: python3 -u research_carry.py
+      - name: Archive evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitget-carry-cost-and-basis-results
+          path: research_carry_report.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Publish reproducible research
+        if: always()
+        run: |
+          if test -f research_carry_report.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add research_carry_report.json
+            if ! git diff --cached --quiet; then
+              git commit -m "Publish simulated funding carry evidence [skip ci]"
+              for n in 1 2 3 4; do
+                git push && break
+                git pull --rebase
+              done
+            fi
+          fi
+      - name: Mark incomplete study failed
+        if: steps.simulate.outcome != 'success'
+        run: exit 1
