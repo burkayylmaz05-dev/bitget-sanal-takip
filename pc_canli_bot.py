@@ -45,10 +45,12 @@ def load_state(now_ms):
         state = {}
     state.setdefault('last_processed', {})
     state.setdefault('last_signal', {})
-    baseline = closed_bar(now_ms)
     for symbol in SYMBOLS:
-        # First start begins with NEXT finished candle: no historical alerts.
-        state['last_processed'].setdefault(symbol, baseline)
+        for tf in FRAMES:
+            key = signal_key(symbol, tf)
+            legacy = state['last_processed'].get(symbol) if tf == '5m' else None
+            state['last_processed'].setdefault(
+                key, legacy if isinstance(legacy, int) else closed_bar(now_ms, tf))
     return state
 
 
@@ -90,14 +92,17 @@ def setup_telegram():
 
 
 def format_signal(candidate, trends):
-    label = 'LONG' if candidate['direction'] == 'LONG' else 'SHORT'
+    direction = candidate['direction']
+    tf = candidate['timeframe']
     now = dt.datetime.now(dt.timezone.utc).astimezone().strftime('%d.%m %H:%M')
-    return (f'BITGET {candidate["symbol"]} {label} ADAY | {now}\n'
-            f'5dk kapanis: {candidate["entry"]:,.2f} USDT\n'
+    label = {'5m': '5 DAKIKA', '15m': '15 DAKIKA', '1H': '1 SAAT', '4H': '4 SAAT'}[tf]
+    trend_text = " / ".join(f"{k}: {trends.get(k)}" for k in FRAMES)
+    return (f'BITGET {candidate["symbol"]} {direction} ADAY | {label} | {now}\n'
+            f'{tf} KAPANMIS mum: {candidate["entry"]:,.2f} USDT\n'
             f'Stop: {candidate["stop"]:,.2f} | Hedef: {candidate["target"]:,.2f}\n'
             f'RSI: {candidate["rsi"]:.1f} | Hacim: {candidate["volume_ratio"]:.2f}x\n'
-            f'15dk/1s/4s trend: {trends.get("15m")}/{trends.get("1H")}/{trends.get("4H")}\n'
-            'UYARI: Sinyal adayi, kar garantisi yok. Gercek emir acilmaz.')
+            f'Trendler: {trend_text}\n'
+            'Sadece sinyal adayi; gercek emir YOK. Kar garantisi yok.')
 
 
 class Watcher:
