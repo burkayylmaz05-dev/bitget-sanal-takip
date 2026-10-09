@@ -7,3 +7,7 @@ bitget_telegram_ayar.json
 *.pem
 pc_telegram_ayar.json
 pc_canli_durum.json
+
+# ETH 1H forward-paper results are local only; never upload user trading data
+pc_eth_forward_state.json
+pc_eth_forward_trades.jsonl
