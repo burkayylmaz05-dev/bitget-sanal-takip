@@ -4,8 +4,8 @@
   "data_source": "Bitget public BTC ETH spot and USDT futures historical 1H, true funding timestamps",
   "periods": {
     "start": 1770822000000,
-    "development": 1775142000000,
-    "validation": 1783782000000,
+    "development": 1772118000000,
+    "validation": 1775314800000,
     "end": 1791558000000
   },
   "assumptions": {
