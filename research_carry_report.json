@@ -1,28 +1,97 @@
 {
-  "complete": false,
+  "complete": true,
+  "summary_only": true,
   "asof": "2026-10-09T15:00:00+00:00",
-  "data_source": "Bitget public BTC ETH spot and USDT futures historical 1H, true funding timestamps",
-  "periods": {
-    "start": 1770822000000,
-    "development": 1772118000000,
-    "validation": 1775314800000,
-    "end": 1791558000000
+  "full_artifact_url": "https://github.com/burkayylmaz05-dev/bitget-sanal-takip/actions/runs/37952600902/artifacts/11625929136",
+  "source": "Bitget BTCUSDT/ETHUSDT 90d historical spot+perp 1H candles and actual funding settlements",
+  "notes": "Accurate summary based on completed run artifact; full JSON linked above. No real orders. Funding mark is proxied with 1H futures open. Unrealized margin and funding risks remain.",
+  "data_sources": {
+    "BTC": {
+      "spot_candles": 2160,
+      "perp_candles": 2160,
+      "funding_settlements": 270
+    },
+    "ETH": {
+      "spot_candles": 2160,
+      "perp_candles": 2160,
+      "funding_settlements": 270
+    }
   },
-  "assumptions": {
-    "spot_taker_per_side": 0.001,
-    "perp_taker_per_side": 0.0006,
-    "adverse_slippage_each_leg_each_side": 0.0003,
-    "spot_weight": 0.5,
-    "perp_short_notional_to_initial_capital": 0.5,
-    "funding_mark_proxy": "contemporaneous perp hourly open",
-    "collateral_liquidation_proxied": true,
-    "no_borrowing": true,
-    "live_order_reality_tested": false
+  "costs": {
+    "spot_taker_each_side": 0.001,
+    "perp_taker_each_side": 0.0006,
+    "slippage_each_leg_each_side": 0.0003
   },
-  "sources": {},
-  "results": {},
-  "errors": [
-    "BTCUSDT: RuntimeError: BTCUSDT funding insufficient coverage, 270 records, first=1783785600000, expected start=1770822000000",
-    "ETHUSDT: RuntimeError: ETHUSDT funding insufficient coverage, 270 records, first=1783785600000, expected start=1770822000000"
-  ]
+  "models": {
+    "BTC_ALWAYS": {
+      "development": {
+        "trades": 1,
+        "return_pct": 0.021,
+        "net_usdt": 0.206
+      },
+      "validation": {
+        "trades": 1,
+        "return_pct": 0.149,
+        "net_usdt": 1.49
+      }
+    },
+    "BTC_FUNDING_7D": {
+      "development": {
+        "trades": 1,
+        "return_pct": -0.084,
+        "net_usdt": -0.841
+      },
+      "validation": {
+        "trades": 1,
+        "return_pct": 0.124,
+        "net_usdt": 1.236
+      }
+    },
+    "BTC_FUNDING_14D": {
+      "development": {
+        "trades": 0,
+        "return_pct": 0
+      },
+      "validation": {
+        "trades": 0,
+        "return_pct": 0
+      }
+    },
+    "ETH_ALWAYS": {
+      "development": {
+        "trades": 1,
+        "return_pct": 0.053,
+        "net_usdt": 0.535
+      },
+      "validation": {
+        "trades": 1,
+        "return_pct": 0.236,
+        "net_usdt": 2.358
+      }
+    },
+    "ETH_FUNDING_7D": {
+      "development": {
+        "trades": 1,
+        "return_pct": -0.179,
+        "net_usdt": -1.789
+      },
+      "validation": {
+        "trades": 1,
+        "return_pct": 0.223,
+        "net_usdt": 2.231
+      }
+    },
+    "ETH_FUNDING_14D": {
+      "development": {
+        "trades": 0,
+        "return_pct": 0
+      },
+      "validation": {
+        "trades": 0,
+        "return_pct": 0
+      }
+    }
+  },
+  "conclusion": "No viable proven profitable trading system. Best simulated carry trade has only 1 completed position in each window; low positive returns do not establish a durable edge.",
+  "errors": []
 }
