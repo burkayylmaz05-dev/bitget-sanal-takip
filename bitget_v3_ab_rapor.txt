@@ -7,7 +7,7 @@ Funding: Bitget resmi tarihsel oran; kapanmis 5m fiyat ile YAKLASIK mark degeri.
 Bu ileri test borsada gerceklesen islem degildir. Fiyat kaymasi ve
 likidasyon farklari olabilir. Yuzdeler gelecek kazanc vaadi degildir.
 Test baslangici (UTC): 2026-10-09T13:06:01.401043+00:00
-Rapor (UTC): 2026-10-09T13:34:54.084461+00:00
+Rapor (UTC): 2026-10-09T13:35:13.993906+00:00
 
 A / EMA 50-200:
    Gerceklesen sanal bakiye: 1000.00 USDT (+0.00%)
