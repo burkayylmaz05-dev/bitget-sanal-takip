@@ -82,7 +82,9 @@ def history(symbol, tf, start_ms, end_ms):
         earliest = min(x[0] for x in valid)
         if earliest >= pointer:
             raise RuntimeError(f'Pagination stall {symbol} {tf}, timestamp={pointer}')
-        pointer = earliest - period
+        # Bitget endTime is exclusive; using earliest-period skips a bar at each page seam.
+        # Request up to earliest and de-duplicate the repeated boundary timestamp.
+        pointer = earliest
         if calls > max(100, math.ceil((end_ms - start_ms) / period / 100)):
             raise RuntimeError('Pagination exceeded safety limit')
         if calls % 40 == 0:
