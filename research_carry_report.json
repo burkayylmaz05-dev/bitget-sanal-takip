@@ -1,0 +1,28 @@
+{
+  "complete": false,
+  "asof": "2026-10-09T15:00:00+00:00",
+  "data_source": "Bitget public BTC ETH spot and USDT futures historical 1H, true funding timestamps",
+  "periods": {
+    "start": 1770822000000,
+    "development": 1775142000000,
+    "validation": 1783782000000,
+    "end": 1791558000000
+  },
+  "assumptions": {
+    "spot_taker_per_side": 0.001,
+    "perp_taker_per_side": 0.0006,
+    "adverse_slippage_each_leg_each_side": 0.0003,
+    "spot_weight": 0.5,
+    "perp_short_notional_to_initial_capital": 0.5,
+    "funding_mark_proxy": "contemporaneous perp hourly open",
+    "collateral_liquidation_proxied": true,
+    "no_borrowing": true,
+    "live_order_reality_tested": false
+  },
+  "sources": {},
+  "results": {},
+  "errors": [
+    "BTCUSDT: RuntimeError: BTCUSDT funding insufficient coverage, 270 records",
+    "ETHUSDT: RuntimeError: ETHUSDT funding insufficient coverage, 270 records"
+  ]
+}
