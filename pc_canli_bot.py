@@ -19,6 +19,7 @@ except ImportError:
 
 import bitget_sinyal_takip as engine
 import pc_zaman_dilimleri as multi
+import pc_eth_forward as eth_forward
 
 ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / 'pc_telegram_ayar.json'
@@ -106,11 +107,13 @@ def format_signal(candidate, trends):
 
 
 class Watcher:
-    def __init__(self, config, clock=time.time):
+    def __init__(self, config, clock=time.time, forward_experiment=None):
         self.config = config
         self.clock = clock
         self.stop = threading.Event()
         self.price = {}
+        self.tick_at = {}
+        self.eth_forward = forward_experiment
         self.last_tick = 0.0
         self.last_pong = 0.0
         self.ws = None
@@ -147,6 +150,7 @@ class Watcher:
                     continue
                 if price > 0:
                     self.price[sym] = price
+                    self.tick_at[sym] = self.clock()
                     self.last_tick = self.clock()
 
     def ws_loop(self):
@@ -214,6 +218,21 @@ class Watcher:
                 for tf, _bar in due:
                     self.retry_at[signal_key(sym, tf)] = now + 15
                 continue
+            if sym == 'ETHUSDT' and self.eth_forward is not None:
+                try:
+                    alerts = self.eth_forward.on_market(
+                        market, now_ms,
+                        eth_price=self.price.get('ETHUSDT'),
+                        eth_quote_ms=int(self.tick_at.get('ETHUSDT', 0) * 1000))
+                    for message in alerts:
+                        print('\n' + message + '\n')
+                        try:
+                            telegram_send(self.config, message)
+                        except Exception as send_error:
+                            print('ETH forward-paper Telegram hatasi:', type(send_error).__name__)
+                except Exception as paper_error:
+                    print('ETH forward-paper islenemedi:', type(paper_error).__name__,
+                          str(paper_error)[:140])
             for tf, bar in due:
                 key = signal_key(sym, tf)
                 try:
@@ -271,7 +290,15 @@ def main():
             print('Telegram test bildirimi gonderildi.')
         except Exception as exc:
             print('Telegram test bildirimi BASARISIZ:', type(exc).__name__)
-    bot = Watcher(config)
+    try:
+        forward = eth_forward.PaperExperiment()
+        print('ETH Donchian20 1H ileri sanal test aktif.')
+        print(forward.summary())
+    except Exception as forward_error:
+        forward = None
+        print('ETH ileri sanal test baslatilamadi (diger sinyaller calisacak):',
+              type(forward_error).__name__)
+    bot = Watcher(config, forward_experiment=forward)
     try:
         bot.run()
     except KeyboardInterrupt:
