@@ -1,0 +1,24 @@
+name: BTC 4H Live History Smoke (no orders)
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_btc_4h_live_smoke.py
+      - pc_btc_4h_alert.py
+      - .github/workflows/research-btc-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check Python syntax and read-only alert code
+        run: python3 -m py_compile pc_btc_4h_alert.py research_btc_4h_live_smoke.py
+      - name: Read historical BTC futures price and daily history from Bitget (no orders)
+        run: python3 -u research_btc_4h_live_smoke.py
