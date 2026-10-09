@@ -9,9 +9,13 @@ import github_notify as notify
 import bitget_sinyal_takip as bot
 
 class TestSafety(TestCase):
-    def test_requires_telegram_secrets(self):
+    def test_telegram_missing_does_not_block_paper_mode(self):
         with mock.patch.dict(os.environ, {"TELEGRAM_BOT_TOKEN": "", "TELEGRAM_CHAT_ID": ""}):
-            self.assertEqual(runner.main(), 2)
+            with mock.patch.object(runner.b, "ab_get_4h", side_effect=RuntimeError("mock network offline")):
+                with mock.patch.object(runner, "v2_tick", side_effect=RuntimeError("mock network offline")):
+                    with mock.patch.object(runner.b, "save_json"), mock.patch.object(runner, "enqueue") as queue:
+                        self.assertEqual(runner.main(), 1)
+                        queue.assert_not_called()
 
     def test_queue_and_no_private_settings(self):
         with TemporaryDirectory() as td, mock.patch.object(runner, "PENDING", Path(td) / "q.json"):
