@@ -63,9 +63,9 @@ def v2_tick(state, symbol):
     return messages
 
 def main():
-    if not os.environ.get("TELEGRAM_BOT_TOKEN") or not os.environ.get("TELEGRAM_CHAT_ID"):
-        print("Eksik GitHub Secrets: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID")
-        return 2
+    telegram_enabled = bool(os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID"))
+    if not telegram_enabled:
+        print("Telegram ayarlari henuz eklenmedi: SANAL TEST VE KAYIT DEVAM EDIYOR.")
     state = b.load_json(b.STATE, {"open": {}, "last_signal": {}, "equity": b.PAPER_EQUITY})
     ab_state = b.ab_validate_state(b.load_json(b.AB_STATE_FILE, b.ab_default_state()))
     if "open" not in state or "last_signal" not in state:
@@ -92,7 +92,10 @@ def main():
         except Exception as exc:
             print(sym, "izleme basarisiz:", type(exc).__name__)
     b.save_json(b.STATE, state)
-    enqueue(messages)
+    if telegram_enabled:
+        enqueue(messages)
+    elif messages:
+        print("Telegram kapali, bildirimler kuyruga kaydedilmedi:", len(messages))
     print("Kontroller:", success, "/ 3; bildirim:", len(messages))
     return 0 if success == 3 else 1
 
