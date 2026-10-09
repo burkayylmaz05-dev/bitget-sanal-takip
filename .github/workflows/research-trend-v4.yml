@@ -1,0 +1,35 @@
+name: BTC ETH Locked Trend Study 720d
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_trend_v4.py
+      - .github/workflows/research-trend-v4.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: btc-eth-trend720-research
+  cancel-in-progress: false
+
+jobs:
+  historical:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compile research only
+        run: python3 -m py_compile research_trend_v4.py research_backtest.py
+      - name: Execute independent historical test
+        run: python3 -u research_trend_v4.py
+      - name: Publish JSON report artifact even if test failed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-eth-trend-v4-result
+          path: research_trend_v4_report.json
+          retention-days: 30
+          if-no-files-found: warn
