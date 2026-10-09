@@ -12,12 +12,16 @@ engine = types.ModuleType('bitget_sinyal_takip')
 engine.load_json = lambda path, d: d if not path.exists() else json.loads(path.read_text())
 engine.save_json = lambda path, obj: path.write_text(json.dumps(obj))
 engine.analyze = lambda symbol: (None, {}, 'filtre')
-sys.modules['bitget_sinyal_takip'] = engine
 ws = types.ModuleType('websocket')
 ws.WebSocketApp = type('WebSocketApp', (), {})
-sys.modules['websocket'] = ws
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-app = importlib.import_module('pc_canli_bot')
+# Temporarily use fakes only while loading the PC watcher.
+# Do not replace imported modules for the repository's other tests.
+with patch.dict(sys.modules, {'bitget_sinyal_takip': engine, 'websocket': ws}):
+    spec = importlib.util.spec_from_file_location(
+        '_pc_canli_bot_test', Path(__file__).resolve().parent.parent / 'pc_canli_bot.py')
+    app = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app)
 
 
 class LocalBotTests(unittest.TestCase):
