@@ -85,29 +85,33 @@ def get_candles(symbol,kind,start,end):
     return rows,calls
 
 def get_funding(symbol,start,end):
-    url='https://api.bitget.com/api/v2/mix/market/history-fund-rate'
+    """Try v3 historical funding API; reject any incomplete coverage."""
+    url='https://api.bitget.com/api/v3/market/history-fund-rate'
     rates={}
     pages=0
     while pages<100:
-        raw=fetch(url,{'symbol':symbol,'productType':'USDT-FUTURES',
-                       'pageSize':'100','pageNo':str(pages+1)})
+        data=fetch(url,{'category':'USDT-FUTURES','symbol':symbol,
+                       'limit':'100','cursor':str(pages+1)})
         pages+=1
+        raw=data.get('resultList',[]) if isinstance(data,dict) else data
         if not raw:
             break
         for item in raw:
             try:
-                stamp=int(item['fundingTime']);rate=float(item['fundingRate'])
+                stamp=int(item.get('fundingRateTimestamp',item.get('fundingTime')))
+                rate=float(item['fundingRate'])
             except (ValueError,TypeError,KeyError):
                 continue
             if math.isfinite(rate) and start<=stamp<=end:
                 rates[stamp]=rate
-        earliest=min(int(item['fundingTime']) for item in raw)
+        earliest=min(int(item.get('fundingRateTimestamp',item.get('fundingTime'))) for item in raw)
         if earliest<start:
             break
         time.sleep(.1)
     records=sorted(rates.items())
     if not records or records[0][0]>start+2*DAY or records[-1][0]<end-2*DAY:
-        raise RuntimeError(f'{symbol} funding insufficient coverage, {len(records)} records')
+        raise RuntimeError(f'{symbol} funding insufficient coverage, {len(records)} records, '+
+                           f'first={records[0][0] if records else None}, expected start={start}')
     max_gap=max([b[0]-a[0] for a,b in zip(records,records[1:])],default=0)
     if max_gap>DAY:
         raise RuntimeError(f'{symbol} funding missing intervals max gap {max_gap/HOUR:.1f} hours')
