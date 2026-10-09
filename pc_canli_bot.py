@@ -20,6 +20,7 @@ except ImportError:
 import bitget_sinyal_takip as engine
 import pc_zaman_dilimleri as multi
 import pc_eth_forward as eth_forward
+import pc_btc_4h_alert as btc_trend
 
 ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / 'pc_telegram_ayar.json'
@@ -107,13 +108,15 @@ def format_signal(candidate, trends):
 
 
 class Watcher:
-    def __init__(self, config, clock=time.time, forward_experiment=None):
+    def __init__(self, config, clock=time.time, forward_experiment=None, btc_alert=None):
         self.config = config
         self.clock = clock
         self.stop = threading.Event()
         self.price = {}
         self.tick_at = {}
         self.eth_forward = forward_experiment
+        self.btc_alert = btc_alert
+        self.btc_alert_retry_at = 0.0
         self.last_tick = 0.0
         self.last_pong = 0.0
         self.ws = None
@@ -194,6 +197,24 @@ class Watcher:
     def process_candles(self):
         now = self.clock()
         now_ms = int(now * 1000)
+        # Independent BTC 4H research signal; retries safely if Bitget
+        # historical data are slow after close. Old watcher unchanged.
+        if self.btc_alert is not None and now >= self.btc_alert_retry_at:
+            try:
+                alert = self.btc_alert.check(
+                    now_ms,
+                    quote=self.price.get('BTCUSDT'),
+                    quote_ms=int(self.tick_at.get('BTCUSDT', 0)*1000))
+                if alert:
+                    print('\n'+alert+'\n')
+                    try:
+                        telegram_send(self.config, alert)
+                    except Exception as exc:
+                        print('BTC 4H aday bildirimi gonderilemedi:', type(exc).__name__)
+            except Exception as exc:
+                self.btc_alert_retry_at = now + 15
+                print('BTC 4H aday analiz tekrar denenecek:',
+                      type(exc).__name__, str(exc)[:130])
         for sym in SYMBOLS:
             due = []
             for tf in FRAMES:
@@ -298,7 +319,13 @@ def main():
         forward = None
         print('ETH ileri sanal test baslatilamadi (diger sinyaller calisacak):',
               type(forward_error).__name__)
-    bot = Watcher(config, forward_experiment=forward)
+    try:
+        btc_candidate = btc_trend.SignalAlert()
+        print('BTC 4H EMA20 PULLBACK aday alarmi aktif (sadece sinyal, emir YOK).')
+    except Exception as exc:
+        btc_candidate = None
+        print('BTC 4H alarmi baslatilamadi:', type(exc).__name__)
+    bot = Watcher(config, forward_experiment=forward, btc_alert=btc_candidate)
     try:
         bot.run()
     except KeyboardInterrupt:
