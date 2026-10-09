@@ -17,7 +17,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
-DAYS=int(os.getenv('CARRY_DAYS','240'))
+DAYS=int(os.getenv('CARRY_DAYS','90'))
 HOUR=3_600_000
 DAY=86_400_000
 SYMBOLS=('BTCUSDT','ETHUSDT')
@@ -248,8 +248,8 @@ def main():
     now=int(time.time()*1000)
     end=now-now%HOUR
     start=end-DAYS*DAY
-    develop=start+50*DAY
-    validate=develop+100*DAY
+    develop=start+15*DAY
+    validate=develop+37*DAY
     result={'complete':False,'asof':dt.datetime.fromtimestamp(end/1000,dt.timezone.utc).isoformat(),
             'data_source':'Bitget public BTC ETH spot and USDT futures historical 1H, true funding timestamps',
             'periods':{'start':start,'development':develop,'validation':validate,'end':end},
