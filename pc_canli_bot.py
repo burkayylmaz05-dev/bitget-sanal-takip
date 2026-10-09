@@ -115,7 +115,7 @@ class Watcher:
         self.last_pong = 0.0
         self.ws = None
         self.state = load_state(int(clock() * 1000))
-        self.retry_at = {sym: 0.0 for sym in SYMBOLS}
+        self.retry_at = {signal_key(sym, tf): 0.0 for sym in SYMBOLS for tf in FRAMES}
 
     def on_open(self, ws):
         self.last_pong = self.clock()
@@ -139,10 +139,15 @@ class Watcher:
         if data.get('arg', {}).get('channel') != 'ticker':
             return
         for tick in data.get('data', []):
-            sym = tick.get('instId') or tick.get('symbol')
+            sym = tick.get('instId') or tick.get('symbol') or data.get('arg', {}).get('instId')
             if sym in SYMBOLS and tick.get('lastPr'):
-                self.price[sym] = float(tick['lastPr'])
-                self.last_tick = self.clock()
+                try:
+                    price = float(tick['lastPr'])
+                except (ValueError, TypeError):
+                    continue
+                if price > 0:
+                    self.price[sym] = price
+                    self.last_tick = self.clock()
 
     def ws_loop(self):
         delay = 2
@@ -200,7 +205,7 @@ class Watcher:
     def run(self):
         thread = threading.Thread(target=self.ws_loop, daemon=True)
         thread.start()
-        print('Sinyaller yalnizca kapanmis 5dk mumlarda kontrol edilir.')
+        print('Sinyaller 5dk / 15dk / 1s / 4s mum kapanislarinda AYRI AYRI kontrol edilir.')
         print('Fiyatlar WebSocket ile canli guncellenir. Durdur: Ctrl+C\n')
         print_at = 0
         ping_at = 0
@@ -240,7 +245,7 @@ def main():
     config = setup_telegram()
     if config:
         try:
-            telegram_send(config, 'Bitget PC canli takip basladi (BTC/ETH). Sadece sanal sinyaller, emir yok.')
+            telegram_send(config, 'Bitget PC takip aktif: BTC/ETH 5dk, 15dk, 1s, 4s. Gercek emir yok.')
             print('Telegram test bildirimi gonderildi.')
         except Exception as exc:
             print('Telegram test bildirimi BASARISIZ:', type(exc).__name__)
