@@ -28,6 +28,9 @@ jobs:
           persist-credentials: true
       - name: Verify bot safety and unit tests
         run: python3 -m unittest discover -s tests -v
+      - name: Verify Telegram connection and send one test notification
+        if: github.event_name != 'schedule'
+        run: python3 github_telegram_test.py
       - name: Check market and queue notifications (never orders)
         id: poll
         continue-on-error: true
