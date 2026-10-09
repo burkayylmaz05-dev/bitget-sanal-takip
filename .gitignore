@@ -5,3 +5,5 @@ __pycache__/
 bitget_telegram_ayar.json
 *.key
 *.pem
+pc_telegram_ayar.json
+pc_canli_durum.json
