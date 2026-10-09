@@ -1,0 +1,389 @@
+{
+  "complete": true,
+  "asof_utc": "2026-10-09T12:00:00+00:00",
+  "interval_utc": {
+    "start": "2026-02-11T12:00:00+00:00",
+    "development_from": "2026-04-02T12:00:00+00:00",
+    "validation_from": "2026-07-11T12:00:00+00:00"
+  },
+  "data_source": "Bitget USDT futures, v2 historical candles BTCUSDT / ETHUSDT (not spot)",
+  "assumptions": {
+    "taker_fee_per_side": 0.0006,
+    "slippage_per_side": 0.0003,
+    "risk_budget_frac": 0.005,
+    "max_notional_x": 1.0,
+    "same_bar_stop_first": true,
+    "funding_modeled": false,
+    "selection": "seven predeclared strategies; report all"
+  },
+  "methods": [
+    "H1_CHANNEL20",
+    "H1_CHANNEL55",
+    "H1_PULLBACK_EMA20",
+    "H1_BB_REVERSION",
+    "H4_CHANNEL20",
+    "H4_EMA_TREND",
+    "M15_OVERSOLD_TREND"
+  ],
+  "data_checks": {
+    "BTCUSDT:5m": {
+      "bars": 69120,
+      "pages": 346,
+      "first": 1770811200000,
+      "last": 1791546900000
+    },
+    "BTCUSDT:15m": {
+      "bars": 23040,
+      "pages": 116,
+      "first": 1770811200000,
+      "last": 1791546300000
+    },
+    "BTCUSDT:1H": {
+      "bars": 5760,
+      "pages": 29,
+      "first": 1770811200000,
+      "last": 1791543600000
+    },
+    "BTCUSDT:4H": {
+      "bars": 1440,
+      "pages": 8,
+      "first": 1770811200000,
+      "last": 1791532800000
+    },
+    "ETHUSDT:5m": {
+      "bars": 69120,
+      "pages": 346,
+      "first": 1770811200000,
+      "last": 1791546900000
+    },
+    "ETHUSDT:15m": {
+      "bars": 23040,
+      "pages": 116,
+      "first": 1770811200000,
+      "last": 1791546300000
+    },
+    "ETHUSDT:1H": {
+      "bars": 5760,
+      "pages": 29,
+      "first": 1770811200000,
+      "last": 1791543600000
+    },
+    "ETHUSDT:4H": {
+      "bars": 1440,
+      "pages": 8,
+      "first": 1770811200000,
+      "last": 1791532800000
+    }
+  },
+  "results": {
+    "BTCUSDT:H1_CHANNEL20": {
+      "development": {
+        "days": 100.0,
+        "trades": 42,
+        "wins": 12,
+        "win_rate_pct": 28.57,
+        "net_usdt": -53.68,
+        "return_pct": -5.368,
+        "profit_factor": 0.66,
+        "max_drawdown_pct": -6.098
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 29,
+        "wins": 9,
+        "win_rate_pct": 31.03,
+        "net_usdt": -41.26,
+        "return_pct": -4.126,
+        "profit_factor": 0.633,
+        "max_drawdown_pct": -5.151
+      }
+    },
+    "BTCUSDT:H1_CHANNEL55": {
+      "development": {
+        "days": 100.0,
+        "trades": 20,
+        "wins": 6,
+        "win_rate_pct": 30.0,
+        "net_usdt": -9.09,
+        "return_pct": -0.909,
+        "profit_factor": 0.862,
+        "max_drawdown_pct": -3.489
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 8,
+        "wins": 2,
+        "win_rate_pct": 25.0,
+        "net_usdt": -14.98,
+        "return_pct": -1.498,
+        "profit_factor": 0.548,
+        "max_drawdown_pct": -2.767
+      }
+    },
+    "BTCUSDT:H1_PULLBACK_EMA20": {
+      "development": {
+        "days": 100.0,
+        "trades": 53,
+        "wins": 17,
+        "win_rate_pct": 32.08,
+        "net_usdt": -59.47,
+        "return_pct": -5.947,
+        "profit_factor": 0.7,
+        "max_drawdown_pct": -8.276
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 40,
+        "wins": 11,
+        "win_rate_pct": 27.5,
+        "net_usdt": -69.12,
+        "return_pct": -6.912,
+        "profit_factor": 0.562,
+        "max_drawdown_pct": -7.632
+      }
+    },
+    "BTCUSDT:H1_BB_REVERSION": {
+      "development": {
+        "days": 100.0,
+        "trades": 12,
+        "wins": 3,
+        "win_rate_pct": 25.0,
+        "net_usdt": -45.95,
+        "return_pct": -4.595,
+        "profit_factor": 0.117,
+        "max_drawdown_pct": -4.595
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 28,
+        "wins": 13,
+        "win_rate_pct": 46.43,
+        "net_usdt": -44.43,
+        "return_pct": -4.443,
+        "profit_factor": 0.497,
+        "max_drawdown_pct": -4.616
+      }
+    },
+    "BTCUSDT:H4_CHANNEL20": {
+      "development": {
+        "days": 100.0,
+        "trades": 10,
+        "wins": 4,
+        "win_rate_pct": 40.0,
+        "net_usdt": 3.31,
+        "return_pct": 0.331,
+        "profit_factor": 1.117,
+        "max_drawdown_pct": -1.073
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 4,
+        "wins": 0,
+        "win_rate_pct": 0.0,
+        "net_usdt": -21.03,
+        "return_pct": -2.103,
+        "profit_factor": 0.0,
+        "max_drawdown_pct": -2.103
+      }
+    },
+    "BTCUSDT:H4_EMA_TREND": {
+      "development": {
+        "days": 100.0,
+        "trades": 11,
+        "wins": 5,
+        "win_rate_pct": 45.45,
+        "net_usdt": 15.0,
+        "return_pct": 1.5,
+        "profit_factor": 1.515,
+        "max_drawdown_pct": -0.93
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 8,
+        "wins": 1,
+        "win_rate_pct": 12.5,
+        "net_usdt": -14.32,
+        "return_pct": -1.432,
+        "profit_factor": 0.396,
+        "max_drawdown_pct": -1.432
+      }
+    },
+    "BTCUSDT:M15_OVERSOLD_TREND": {
+      "development": {
+        "days": 100.0,
+        "trades": 150,
+        "wins": 56,
+        "win_rate_pct": 37.33,
+        "net_usdt": -169.12,
+        "return_pct": -16.912,
+        "profit_factor": 0.66,
+        "max_drawdown_pct": -16.912
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 97,
+        "wins": 30,
+        "win_rate_pct": 30.93,
+        "net_usdt": -170.36,
+        "return_pct": -17.036,
+        "profit_factor": 0.504,
+        "max_drawdown_pct": -17.689
+      }
+    },
+    "ETHUSDT:H1_CHANNEL20": {
+      "development": {
+        "days": 100.0,
+        "trades": 38,
+        "wins": 14,
+        "win_rate_pct": 36.84,
+        "net_usdt": 0.83,
+        "return_pct": 0.083,
+        "profit_factor": 1.007,
+        "max_drawdown_pct": -2.139
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 30,
+        "wins": 12,
+        "win_rate_pct": 40.0,
+        "net_usdt": 3.55,
+        "return_pct": 0.355,
+        "profit_factor": 1.035,
+        "max_drawdown_pct": -3.597
+      }
+    },
+    "ETHUSDT:H1_CHANNEL55": {
+      "development": {
+        "days": 100.0,
+        "trades": 23,
+        "wins": 8,
+        "win_rate_pct": 34.78,
+        "net_usdt": 1.0,
+        "return_pct": 0.1,
+        "profit_factor": 1.013,
+        "max_drawdown_pct": -4.094
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 12,
+        "wins": 5,
+        "win_rate_pct": 41.67,
+        "net_usdt": 3.36,
+        "return_pct": 0.336,
+        "profit_factor": 1.088,
+        "max_drawdown_pct": -1.79
+      }
+    },
+    "ETHUSDT:H1_PULLBACK_EMA20": {
+      "development": {
+        "days": 100.0,
+        "trades": 49,
+        "wins": 17,
+        "win_rate_pct": 34.69,
+        "net_usdt": -37.6,
+        "return_pct": -3.76,
+        "profit_factor": 0.783,
+        "max_drawdown_pct": -5.079
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 42,
+        "wins": 17,
+        "win_rate_pct": 40.48,
+        "net_usdt": -20.19,
+        "return_pct": -2.019,
+        "profit_factor": 0.855,
+        "max_drawdown_pct": -4.746
+      }
+    },
+    "ETHUSDT:H1_BB_REVERSION": {
+      "development": {
+        "days": 100.0,
+        "trades": 9,
+        "wins": 5,
+        "win_rate_pct": 55.56,
+        "net_usdt": 2.03,
+        "return_pct": 0.203,
+        "profit_factor": 1.09,
+        "max_drawdown_pct": -0.832
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 2,
+        "wins": 2,
+        "win_rate_pct": 100.0,
+        "net_usdt": 8.29,
+        "return_pct": 0.829,
+        "profit_factor": null,
+        "max_drawdown_pct": 0.0
+      }
+    },
+    "ETHUSDT:H4_CHANNEL20": {
+      "development": {
+        "days": 100.0,
+        "trades": 17,
+        "wins": 4,
+        "win_rate_pct": 23.53,
+        "net_usdt": -29.65,
+        "return_pct": -2.965,
+        "profit_factor": 0.556,
+        "max_drawdown_pct": -4.649
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 9,
+        "wins": 3,
+        "win_rate_pct": 33.33,
+        "net_usdt": -13.08,
+        "return_pct": -1.308,
+        "profit_factor": 0.583,
+        "max_drawdown_pct": -1.308
+      }
+    },
+    "ETHUSDT:H4_EMA_TREND": {
+      "development": {
+        "days": 100.0,
+        "trades": 9,
+        "wins": 4,
+        "win_rate_pct": 44.44,
+        "net_usdt": 12.27,
+        "return_pct": 1.227,
+        "profit_factor": 1.541,
+        "max_drawdown_pct": -1.027
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 10,
+        "wins": 3,
+        "win_rate_pct": 30.0,
+        "net_usdt": -8.71,
+        "return_pct": -0.871,
+        "profit_factor": 0.701,
+        "max_drawdown_pct": -2.854
+      }
+    },
+    "ETHUSDT:M15_OVERSOLD_TREND": {
+      "development": {
+        "days": 100.0,
+        "trades": 157,
+        "wins": 59,
+        "win_rate_pct": 37.58,
+        "net_usdt": -144.46,
+        "return_pct": -14.446,
+        "profit_factor": 0.73,
+        "max_drawdown_pct": -14.685
+      },
+      "validation": {
+        "days": 90.0,
+        "trades": 148,
+        "wins": 48,
+        "win_rate_pct": 32.43,
+        "net_usdt": -232.31,
+        "return_pct": -23.231,
+        "profit_factor": 0.544,
+        "max_drawdown_pct": -23.231
+      }
+    }
+  },
+  "errors": []
+}
