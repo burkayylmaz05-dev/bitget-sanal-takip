@@ -1,0 +1,58 @@
+name: Bitget Strategy Research - Historical Backtest
+
+'on':
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - research_backtest.py
+      - pc_zaman_dilimleri.py
+      - .github/workflows/research-backtest.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bitget-research-validation
+  cancel-in-progress: false
+
+jobs:
+  backtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BACKTEST_DAYS: '120'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+      - name: Run historical Bitget multi-timeframe simulation
+        id: run
+        continue-on-error: true
+        run: python3 -u research_backtest.py
+      - name: Upload research report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitget-strategy-backtest-results
+          path: research_backtest_report.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Save research report for inspection
+        if: always()
+        run: |
+          if test -f research_backtest_report.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add research_backtest_report.json
+            if ! git diff --cached --quiet; then
+              git commit -m "Publish cost-aware backtest results [skip ci]"
+              for n in 1 2 3; do
+                git push && break
+                git pull --rebase
+              done
+            fi
+          fi
+      - name: Fail on incomplete research
+        if: steps.run.outcome != 'success'
+        run: exit 1
