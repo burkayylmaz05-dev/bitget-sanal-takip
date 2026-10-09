@@ -2,7 +2,7 @@
 """Reproducible no-order backtest for live BTC/ETH 5m,15m,1H,4H signal rules.
 
 Historical Bitget USDT-FUTURES close candles, correct HTF as-of joins.
-Entry at NEXT 5m open, conservative OHLC ambiguous fill (stop first),
+Entry at NEXT 5m open, conservative OHLC ambiguous fill (stop first, including entry bar),
 standard taker fees and assumed slippage. Funding and real spread unavailable.
 NO API KEYS, NO ORDERS. Writes only research_backtest_report.json.
 """
@@ -268,7 +268,25 @@ def simulate(sym, tf, five, signal_events, window_start, window_end):
         trade=dict(entry=price, qty=qty, stop=stop, target=event['target'],
                    direction=direction, time=now,
                    deadline=now + min(12*PERIOD[tf], 12*3600_000 if tf in ('5m','15m') else 48*3600_000))
-        # An open and exit may occur in same bar; conservative end-of-bar check next iteration.
+        # Check newly-opened position within the SAME 5m entry candle.
+        # Without this, immediate stop losses are missed and returns are too optimistic.
+        hit_stop = (bar[3] <= stop) if direction==1 else (bar[2] >= stop)
+        hit_target = (bar[2] >= trade['target']) if direction==1 else (bar[3] <= trade['target'])
+        if hit_stop or hit_target:
+            if hit_stop:  # Stop-first when OHLC path is ambiguous.
+                raw_exit = (min(stop,bar[1]) if direction==1 else max(stop,bar[1]))
+                reason='STOP'
+            else:
+                raw_exit=trade['target']
+                reason='TARGET'
+            exit_fill=raw_exit*(1-SLIP_PER_SIDE*direction)
+            pnl=(exit_fill-trade['entry'])*direction*qty - TAKER_FEE*qty*(trade['entry']+exit_fill)
+            equity+=pnl
+            equities.append(equity)
+            trades.append(dict(entry_utc=now,exit_utc=now,result=reason,
+                               direction='LONG' if direction==1 else 'SHORT',
+                               pnl=round(pnl,5),notional=round(qty*trade['entry'],2)))
+            trade=None
     if trade:
         # Close at first available final bar opening, no position carried across samples.
         last = max((r for r in five if window_start <= r[0] < window_end), key=lambda x:x[0], default=None)
@@ -299,7 +317,7 @@ def main():
     split_ms=eval_start+(end_ms-eval_start)*3//5
     split_ms -= split_ms%PERIOD['4H']
     result=dict(
-        methodology='CLOSED signals; next 5m OPEN with 0.03% adverse slippage per side, 0.06% taker fee each side, stop first on ambiguous bars, 1x maximum notional, 0.5% risk budget, funding/spread/latency not modeled.',
+        methodology='CLOSED signals; next 5m OPEN with 0.03% adverse slippage per side, 0.06% taker fee each side, stop first on ambiguous bars including entry bar, 1x maximum notional, 0.5% risk budget, funding/spread/latency not modeled.',
         data_source='Bitget USDT-FUTURES public historical candles (not Binance spot)',
         reproducible_code='research_backtest.py',
         asof_utc=dt.datetime.fromtimestamp(end_ms/1000,dt.timezone.utc).isoformat(),
