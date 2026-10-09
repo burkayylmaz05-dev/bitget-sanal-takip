@@ -165,42 +165,64 @@ class Watcher:
             self.stop.wait(delay)
             delay = min(delay * 2, 60)
 
-    def scan(self, symbol, bar):
-        candidate, trends, reason = engine.analyze(symbol)
+    def scan(self, symbol, timeframe, bar, market):
+        key = signal_key(symbol, timeframe)
+        candidate, trends, reason = multi.analyze(symbol, timeframe, market)
         if candidate and candidate['candle'] == bar:
-            key = f'{candidate["direction"]}:{bar}'
-            if self.state['last_signal'].get(symbol) != key:
+            dedup_key = f'{candidate["direction"]}:{bar}'
+            if self.state['last_signal'].get(key) != dedup_key:
                 message = format_signal(candidate, trends)
                 print('\n' + message + '\n')
+                # Durumu Telegram gonderiminden once kalici sakla; tekrar alarm yok.
+                self.state['last_signal'][key] = dedup_key
+                self.state['last_processed'][key] = bar
+                engine.save_json(STATE_FILE, self.state)
                 try:
                     telegram_send(self.config, message)
                 except Exception as exc:
                     print('Telegram gonderilemedi:', type(exc).__name__)
-                # Avoid duplicate spam even if Telegram is temporarily unreachable.
-                self.state['last_signal'][symbol] = key
+                return
         else:
-            print(f'{symbol}: sinyal yok ({reason}).')
-        self.state['last_processed'][symbol] = bar
+            print(f'{symbol} {timeframe}: sinyal yok ({reason}).')
+        self.state['last_processed'][key] = bar
         engine.save_json(STATE_FILE, self.state)
 
     def process_candles(self):
         now = self.clock()
         now_ms = int(now * 1000)
-        bar = closed_bar(now_ms)
         for sym in SYMBOLS:
-            if self.state['last_processed'][sym] >= bar or self.retry_at[sym] > now:
-                continue
-            age_ms = now_ms - (bar + CANDLE_MS)
-            if age_ms > MAX_SIGNAL_AGE_MS:
-                print(sym, 'eski mum atlandi; gecmis sinyal yollanmayacak.')
-                self.state['last_processed'][sym] = bar
-                engine.save_json(STATE_FILE, self.state)
+            due = []
+            for tf in FRAMES:
+                key = signal_key(sym, tf)
+                bar = closed_bar(now_ms, tf)
+                if self.state['last_processed'][key] >= bar or self.retry_at[key] > now:
+                    continue
+                age_ms = now_ms - (bar + multi.TF_MS[tf])
+                if age_ms > MAX_SIGNAL_AGE_MS:
+                    print(sym, tf, 'eski mum atlandi, gecikmis bildirim yok.')
+                    self.state['last_processed'][key] = bar
+                    engine.save_json(STATE_FILE, self.state)
+                    continue
+                due.append((tf, bar))
+            if not due:
                 continue
             try:
-                self.scan(sym, bar)
+                # Tum TF verilerini ayni kontrol icin sadece bir kez indir.
+                market = multi.fetch_market(sym)
             except Exception as exc:
-                print(sym, 'analiz hatasi:', type(exc).__name__, str(exc)[:140])
-                self.retry_at[sym] = now + 15
+                print(sym, 'veri cekme hatasi:', type(exc).__name__, str(exc)[:140])
+                for tf, _bar in due:
+                    self.retry_at[signal_key(sym, tf)] = now + 15
+                continue
+            for tf, bar in due:
+                key = signal_key(sym, tf)
+                try:
+                    if market[tf][-1][0] != bar:
+                        raise RuntimeError('Kapanmis mum Bitget API uzerinde henüz hazir degil')
+                    self.scan(sym, tf, bar, market)
+                except Exception as exc:
+                    print(sym, tf, 'analiz hatasi:', type(exc).__name__, str(exc)[:140])
+                    self.retry_at[key] = now + 15
 
     def run(self):
         thread = threading.Thread(target=self.ws_loop, daemon=True)
