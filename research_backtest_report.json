@@ -1,11 +1,11 @@
 {
-  "methodology": "CLOSED signals; next 5m OPEN with 0.03% adverse slippage per side, 0.06% taker fee each side, stop first on ambiguous bars, 1x maximum notional, 0.5% risk budget, funding/spread/latency not modeled.",
+  "methodology": "CLOSED signals; next 5m OPEN with 0.03% adverse slippage per side, 0.06% taker fee each side, stop first on ambiguous bars including entry bar, 1x maximum notional, 0.5% risk budget, funding/spread/latency not modeled.",
   "data_source": "Bitget USDT-FUTURES public historical candles (not Binance spot)",
   "reproducible_code": "research_backtest.py",
-  "asof_utc": "2026-10-09T15:05:00+00:00",
+  "asof_utc": "2026-10-09T15:10:00+00:00",
   "date_span": {
-    "start": "2026-06-11T15:05:00+00:00",
-    "warmup_end": "2026-07-21T15:05:00+00:00",
+    "start": "2026-06-11T15:10:00+00:00",
+    "warmup_end": "2026-07-21T15:10:00+00:00",
     "split": "2026-09-07T12:00:00+00:00"
   },
   "cost_assumptions": {
@@ -162,10 +162,10 @@
       "closed_trades": 50,
       "winners": 15,
       "win_rate": 30.0,
-      "net_usdt": -82.973,
-      "return_pct": -8.297,
-      "max_drawdown_pct": -8.297,
-      "profit_factor": 0.384,
+      "net_usdt": -60.28,
+      "return_pct": -6.028,
+      "max_drawdown_pct": -6.028,
+      "profit_factor": 0.462,
       "example_trades": [
         {
           "entry_utc": 1784695500000,
@@ -606,8 +606,8 @@
       "5m": {
         "candles": 34560,
         "calls": 173,
-        "first": 1781190300000,
-        "last": 1791558000000
+        "first": 1781190600000,
+        "last": 1791558300000
       },
       "15m": {
         "candles": 11519,
@@ -632,8 +632,8 @@
       "5m": {
         "candles": 34560,
         "calls": 173,
-        "first": 1781190300000,
-        "last": 1791558000000
+        "first": 1781190600000,
+        "last": 1791558300000
       },
       "15m": {
         "candles": 11519,
