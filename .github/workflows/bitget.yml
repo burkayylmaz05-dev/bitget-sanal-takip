@@ -1,0 +1,56 @@
+name: Bitget BTC ETH Sanal Takip (ucretsiz)
+
+'on':
+  schedule:
+    # GitHub scheduler best-effort, can delay or skip runs
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bitget-paper-tracker
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify bot safety and unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Check market and queue notifications (never orders)
+        id: poll
+        continue-on-error: true
+        run: python3 github_runner.py
+      - name: Persist paper state before any notification
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for path in bitget_sinyal_v2_durum.json bitget_v3_ab_durum.json bildirim_kuyrugu.json bitget_sanal_islemler_v2.jsonl bitget_v3_ab_islemler.jsonl bitget_v3_ab_rapor.txt; do
+            if test -f "$path"; then git add -f -- "$path"; fi
+          done
+          if ! git diff --cached --quiet; then
+            git commit -m "Update simulated account state [skip ci]"
+            git push
+          fi
+      - name: Send queued Telegram notifications
+        run: python3 github_notify.py
+      - name: Persist successful sends
+        if: always()
+        run: |
+          git add -f -- bildirim_kuyrugu.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Telegram queue [skip ci]"
+            git push
+          fi
+      - name: Mark incomplete market data as failed
+        if: steps.poll.outcome == 'failure'
+        run: exit 1
