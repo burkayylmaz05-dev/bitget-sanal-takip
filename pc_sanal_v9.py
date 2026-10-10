@@ -246,13 +246,34 @@ class Book:
         self.save()
 
     def _load_telegram(self):
-        try:
-            x = json.loads((self.folder / TELEGRAM_PATH.name)
-                           .read_text(encoding="utf-8"))
-            if x.get("token") and x.get("chat_id"):
-                return {"token": x["token"], "chat_id": x["chat_id"]}
-        except (FileNotFoundError, ValueError, OSError):
-            pass
+        # Reuse previous bot's PC-only Telegram config without asking for keys,
+        # copying secrets to a new folder, or uploading them anywhere.
+        home = Path.home()
+        roots = [self.folder,
+                 home / "Desktop", home / "Masaüstü",
+                 home / "Downloads", home / "İndirilenler",
+                 home / "OneDrive" / "Desktop",
+                 home / "OneDrive" / "Masaüstü"]
+        scanned = set()
+        for folder in roots:
+            for pattern in ("pc_telegram_ayar.json",
+                            "*/pc_telegram_ayar.json",
+                            "*/*/pc_telegram_ayar.json"):
+                try:
+                    matches = folder.glob(pattern)
+                    for candidate in matches:
+                        if not candidate.is_file() or candidate in scanned:
+                            continue
+                        scanned.add(candidate)
+                        try:
+                            x = json.loads(candidate.read_text(encoding="utf-8"))
+                            if x.get("token") and x.get("chat_id"):
+                                return {"token": x["token"],
+                                        "chat_id": x["chat_id"]}
+                        except (OSError, ValueError, TypeError):
+                            continue
+                except OSError:
+                    continue
         return {}
 
     def _notify(self, message):
