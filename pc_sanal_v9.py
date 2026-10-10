@@ -491,12 +491,22 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
 <body>
 <div class="top"><div><h1>Bitget BTC + ETH | Sanal Islem Paneli</h1>
 <div class="muted small">Gercek hesap baglantisi yok. Para kullanilmaz, borsaya emir gitmez.</div></div>
-<div><span class="tag" id="stat">Baglaniyor</span><div class="small muted" id="refreshed"></div></div></div>
+<div><span class="tag" id="stat">Baglaniyor</span><div class="small muted" id="refreshed"></div><div class="small muted" id="nextcheck"></div></div></div>
 <div class="grid" id="coins"><div class="card">Bitget verisi bekleniyor...</div></div>
 <div style="height:18px"></div>
 <div class="card"><h2>2026 gercek piyasa verisiyle tarihsel sanal test</h2>
 <p class="muted small">Bu bolumdeki sonuclar gecmiste yapilan simülasyondur. Ustteki bakiye ve islemler ise yalnizca bu program acikken ileriye donuk birikir. Iki kat masraf testi dahildir.</p>
 <div class="grid" id="research"></div></div>
+<div style="height:18px"></div>
+<div class="card"><h2>2026 gecmis sanal islemlerinden gercek fiyat ornekleri</h2>
+<p class="muted small">Bunlar daha once Bitget mumlariyla yeniden oynatilmis TARIHSEL emirlerdir; V9 acildiktan sonra canli acilmis emirler DEGIL. Basarili ve basarisiz ornekler birlikte.</p>
+<table><thead><tr><th>UTC tarih</th><th>Coin</th><th>Yon</th><th>Giris → cikis</th><th>Net USDT</th></tr></thead>
+<tbody><tr><td>24.07.2026</td><td>BTC</td><td>SHORT</td><td>64.051 → 65.631</td><td class="red">−5,18</td></tr>
+<tr><td>28.07.2026</td><td>BTC</td><td>SHORT</td><td>63.301 → 64.853</td><td class="red">−5,41</td></tr>
+<tr><td>10.08.2026</td><td>BTC</td><td>SHORT</td><td>64.008 → 63.777</td><td class="green">+0,70</td></tr>
+<tr><td>02.06.2026</td><td>ETH</td><td>SHORT</td><td>1.913 → 1.713</td><td class="green">+12,00</td></tr>
+<tr><td>24.06.2026</td><td>ETH</td><td>SHORT</td><td>1.617 → 1.648</td><td class="red">−2,18</td></tr>
+<tr><td>01.08.2026</td><td>ETH</td><td>SHORT</td><td>1.836 → 1.897</td><td class="red">−5,28</td></tr></tbody></table></div>
 <div style="height:18px"></div>
 <div class="card"><h2>Neden su anda pozisyon acik olmayabilir?</h2>
 <p>Bot sadece <strong>tamamlanan 4 saatlik mumlarda</strong> strateji sinyali arar. Veri veya trend kosullari yoksa emir uydurmaz. BTC Donchian20 2026'nin son ~4 ayinda 6, ETH Donchian55 3 tarihsel islem uretmisti; bu stratejiler sik islem yapmaz.</p>
@@ -528,6 +538,7 @@ async function render(){
  const d=await r.json();
  document.getElementById('stat').textContent=d.status.status;
  document.getElementById('refreshed').textContent='Son yenileme: '+dtfmt(d.now_utc);
+ document.getElementById('nextcheck').textContent='Sonraki 4H mum: '+dtfmt(d.status.next_4h_at);
  document.getElementById('coins').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>sHtml(s,d)).join('');
  document.getElementById('research').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>{
   const x=d.historical_research[s];
@@ -591,6 +602,8 @@ def main():
     next_scan = 0
     while True:
         now = utc_ms()
+        with book.lock:
+            book.info["next_4h_at"] = iso(((now // FOUR) + 1) * FOUR)
         try:
             if now >= next_tickers:
                 next_tickers = now + 20_000
