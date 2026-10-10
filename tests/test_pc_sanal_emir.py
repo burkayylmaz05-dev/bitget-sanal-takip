@@ -43,6 +43,9 @@ class PaperOrders(unittest.TestCase):
         self.assertIn('TEKNIK SISTEM TESTI',opened1[0])
         self.assertIn('SANAL EMIR ACILDI',opened2[0])
         self.assertEqual(b.on_quote('BTCUSDT',85000,self.start+1000,now_ms=self.start+1000),[])
+        # Continuous real-time quotes, not an artificial 91s market-data blackout.
+        b.on_quote('BTCUSDT',85004,self.start+50_000,now_ms=self.start+50_000)
+        b.on_quote('ETHUSDT',2598,self.start+50_000,now_ms=self.start+50_000)
         done=b.on_quote('BTCUSDT',85010,self.start+92_000,now_ms=self.start+92_000)
         done2=b.on_quote('ETHUSDT',2590,self.start+92_000,now_ms=self.start+92_000)
         self.assertEqual(len(done),len(done2))
