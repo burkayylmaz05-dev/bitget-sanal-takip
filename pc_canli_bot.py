@@ -21,6 +21,7 @@ import bitget_sinyal_takip as engine
 import pc_zaman_dilimleri as multi
 import pc_eth_forward as eth_forward
 import pc_btc_4h_alert as btc_trend
+import pc_sanal_emir as paper_demo
 
 ROOT = Path(__file__).resolve().parent
 CONFIG_FILE = ROOT / 'pc_telegram_ayar.json'
@@ -108,7 +109,7 @@ def format_signal(candidate, trends):
 
 
 class Watcher:
-    def __init__(self, config, clock=time.time, forward_experiment=None, btc_alert=None):
+    def __init__(self, config, clock=time.time, forward_experiment=None, btc_alert=None, paper_book=None):
         self.config = config
         self.clock = clock
         self.stop = threading.Event()
@@ -116,6 +117,7 @@ class Watcher:
         self.tick_at = {}
         self.eth_forward = forward_experiment
         self.btc_alert = btc_alert
+        self.paper_book = paper_book
         self.btc_alert_retry_at = 0.0
         self.last_tick = 0.0
         self.last_pong = 0.0
@@ -254,6 +256,17 @@ class Watcher:
                 except Exception as paper_error:
                     print('ETH forward-paper islenemedi:', type(paper_error).__name__,
                           str(paper_error)[:140])
+            # Separate, unvalidated 5m paper experiment. Never submits real orders.
+            if self.paper_book is not None:
+                try:
+                    paper_messages = self.paper_book.on_closed_5m(
+                        sym, market['5m'], self.price.get(sym),
+                        int(self.tick_at.get(sym, 0)*1000), now_ms)
+                    for message in paper_messages:
+                        self.report_paper_message(message)
+                except Exception as paper_error:
+                    print('Sanal 5m emir takip hatasi:', type(paper_error).__name__,
+                          str(paper_error)[:150])
             for tf, bar in due:
                 key = signal_key(sym, tf)
                 try:
@@ -263,6 +276,29 @@ class Watcher:
                 except Exception as exc:
                     print(sym, tf, 'analiz hatasi:', type(exc).__name__, str(exc)[:140])
                     self.retry_at[key] = now + 15
+
+    def report_paper_message(self, message):
+        print('\n'+message+'\n', flush=True)
+        try:
+            telegram_send(self.config, message)
+        except Exception as exc:
+            print('Sanal emir Telegram bildirimi BASARISIZ:', type(exc).__name__)
+
+    def paper_tick(self, now_ms):
+        if self.paper_book is None:
+            return
+        for sym in SYMBOLS:
+            value = self.price.get(sym)
+            timestamp = self.tick_at.get(sym)
+            if value is None or timestamp is None:
+                continue
+            try:
+                alerts = self.paper_book.on_quote(
+                    sym, value, int(timestamp*1000), now_ms=now_ms)
+                for message in alerts:
+                    self.report_paper_message(message)
+            except Exception as exc:
+                print(sym,'Sanal emir izleme hatasi:',type(exc).__name__,str(exc)[:150])
 
     def run(self):
         thread = threading.Thread(target=self.ws_loop, daemon=True)
@@ -292,8 +328,11 @@ class Watcher:
                 eth = f'{self.price["ETHUSDT"]:,.2f}' if 'ETHUSDT' in self.price else '--'
                 status = 'canli' if self.last_tick and now - self.last_tick < 30 else 'baglaniyor'
                 print(f'{dt.datetime.now().strftime("%H:%M:%S")} | BTC {btc} | ETH {eth} | {status}')
+                if self.paper_book is not None:
+                    print('SANAL HESAPLAR | '+self.paper_book.status())
                 print_at = now + 30
             self.process_candles()
+            self.paper_tick(int(self.clock()*1000))
             self.stop.wait(1)
 
 
@@ -325,7 +364,17 @@ def main():
     except Exception as exc:
         btc_candidate = None
         print('BTC 4H alarmi baslatilamadi:', type(exc).__name__)
-    bot = Watcher(config, forward_experiment=forward, btc_alert=btc_candidate)
+    try:
+        paper = paper_demo.PaperBook()
+        print('BTC/ETH hizli sanal emir defteri aktif: once 90sn TEKNIK TEST, sonra 5m EMA21 DEMO.')
+        print('KAR STRATEJISI DEGIL: test emirleri strateji istatistigine katilmaz.')
+        print('Sanal rapor: pc_sanal_sonuc.txt | Islem gecmisi: pc_sanal_emirler.jsonl')
+        print(paper.status())
+    except Exception as exc:
+        paper = None
+        print('Hizli sanal emir defteri BASLATILAMADI:', type(exc).__name__,str(exc)[:160])
+    bot = Watcher(config, forward_experiment=forward, btc_alert=btc_candidate,
+                  paper_book=paper)
     try:
         bot.run()
     except KeyboardInterrupt:
