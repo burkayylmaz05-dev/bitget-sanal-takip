@@ -274,12 +274,14 @@ class Book:
 
     def _log(self, event, symbol, p, price, net, reason):
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
-        with self.log_path.open("a", encoding="utf-8-sig", newline="") as handle:
-            w = csv.writer(handle, delimiter=";")
+        with self.log_path.open("a", encoding="utf-8", newline="") as handle:
             if handle.tell() == 0:
+                handle.write("\ufeff")  # one Excel BOM only, not one per append
+                w = csv.writer(handle, delimiter=";")
                 w.writerow(["Zaman UTC", "Olay", "Coin", "Yon",
                             "Giris USDT", "Cikis USDT", "Net USDT",
                             "Sebep", "Sanal ID"])
+            w = csv.writer(handle, delimiter=";")
             w.writerow([iso(self.now()), event, symbol,
                         "LONG" if p["direction"] == 1 else "SHORT",
                         round(p["entry"], 4),
@@ -544,14 +546,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
 def main():
     print("\nBITGET SANAL PANEL V9 - GERCEK EMIR GONDERMEZ", flush=True)
     print("Bitget public BTC ETH verisi | BTC Donchian20 / ETH Donchian55 4H", flush=True)
-    book = Book()
-    Handler.book = book
     try:
         server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     except OSError:
         print("Panel zaten acik olabilir: http://127.0.0.1:%d" % PORT)
         webbrowser.open("http://127.0.0.1:%d/" % PORT)
         return
+    # Lock port BEFORE loading state: second launcher must not mark an
+    # already running paper position as unverified and overwrite disk state.
+    try:
+        book = Book()
+    except Exception:
+        server.server_close()
+        raise
+    Handler.book = book
     threading.Thread(target=server.serve_forever, daemon=True).start()
     print("PANEL: http://127.0.0.1:%d/" % PORT, flush=True)
     print("Excel islemler: %s" % LOG_PATH.name, flush=True)
@@ -606,6 +614,10 @@ def main():
             raise
         except Exception as exc:
             print("Izleme tekrar deneniyor:", type(exc).__name__, str(exc)[:160])
+        with book.lock:
+            fresh = [v.get("last_quote_at") for v in book.accounts.values()]
+            if not all(v and 0 <= now-v <= MAX_TICK_GAP_MS for v in fresh):
+                book.info["status"] = "VERI BEKLENIYOR"
         time.sleep(1)
 
 
