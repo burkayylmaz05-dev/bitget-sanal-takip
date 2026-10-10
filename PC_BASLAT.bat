@@ -5,7 +5,7 @@ cd /d "%~dp0"
 title Bitget BTC ETH Canli Sinyal - 5m 15m 1H 4H
 
 echo ======================================================
-echo   BITGET PC CANLI BOT - BASLATICI (v7)
+echo   BITGET PC CANLI BOT - BASLATICI (v8)
 echo   BTC ve ETH: 5m / 15m / 1H / 4H
 echo ======================================================
 echo.
@@ -44,7 +44,7 @@ echo Python bulundu: "%PYTHON_EXE%"
 
 echo.
 echo [2/4] Bot dosyalari GitHub'dan indiriliyor...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $base='https://raw.githubusercontent.com/burkayylmaz05-dev/bitget-sanal-takip/main/'; $names=@('bitget_sinyal_takip.py','pc_zaman_dilimleri.py','research_backtest.py','research_alternatives.py','pc_eth_forward.py','research_trend_v4.py','pc_btc_4h_alert.py','pc_canli_bot.py'); foreach($name in $names){ $tmp=$name+'.downloading'; try { Write-Host ('Indiriliyor: '+$name); Invoke-WebRequest -Uri ($base+$name+'?v='+[DateTime]::UtcNow.Ticks) -OutFile $tmp -UseBasicParsing -TimeoutSec 45; if ((Get-Item -LiteralPath $tmp).Length -lt 200) { throw ('Bos veya eksik dosya: '+$name) }; Move-Item -LiteralPath $tmp -Destination $name -Force -ErrorAction Stop; Write-Host ('Tamam: '+$name) } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction Stop } } }; exit 0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $base='https://raw.githubusercontent.com/burkayylmaz05-dev/bitget-sanal-takip/main/'; $names=@('bitget_sinyal_takip.py','pc_zaman_dilimleri.py','research_backtest.py','research_alternatives.py','pc_eth_forward.py','research_trend_v4.py','pc_btc_4h_alert.py','pc_sanal_emir.py','pc_canli_bot.py'); foreach($name in $names){ $tmp=$name+'.downloading'; try { Write-Host ('Indiriliyor: '+$name); Invoke-WebRequest -Uri ($base+$name+'?v='+[DateTime]::UtcNow.Ticks) -OutFile $tmp -UseBasicParsing -TimeoutSec 45; if ((Get-Item -LiteralPath $tmp).Length -lt 200) { throw ('Bos veya eksik dosya: '+$name) }; Move-Item -LiteralPath $tmp -Destination $name -Force -ErrorAction Stop; Write-Host ('Tamam: '+$name) } finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction Stop } } }; exit 0"
 if errorlevel 1 (
   echo.
   echo HATA: Guncelleme tamamlanamadi.
@@ -54,7 +54,7 @@ if errorlevel 1 (
 
 echo.
 echo [3/4] Python dosyalari kontrol ediliyor...
-"%PYTHON_EXE%" -m py_compile bitget_sinyal_takip.py pc_zaman_dilimleri.py research_backtest.py research_alternatives.py pc_eth_forward.py research_trend_v4.py pc_btc_4h_alert.py pc_canli_bot.py
+"%PYTHON_EXE%" -m py_compile bitget_sinyal_takip.py pc_zaman_dilimleri.py research_backtest.py research_alternatives.py pc_eth_forward.py research_trend_v4.py pc_btc_4h_alert.py pc_sanal_emir.py pc_canli_bot.py
 if errorlevel 1 (
   echo HATA: Python dosyalarinda derleme hatasi.
   goto :error
