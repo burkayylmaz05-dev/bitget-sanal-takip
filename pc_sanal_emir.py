@@ -280,7 +280,8 @@ class PaperBook:
             msg=self._open(sym,'SYSTEM_TEST',direction,price,now_ms)
             if msg:
                 messages.append(msg)
-        self.persist()
+        if messages and a['open'] is None:
+            self.persist()
         return messages
 
     def on_closed_5m(self, sym, rows, price, quote_ms, now_ms):
