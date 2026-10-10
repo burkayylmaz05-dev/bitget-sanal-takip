@@ -12,3 +12,8 @@ pc_canli_durum.json
 pc_eth_forward_state.json
 pc_eth_forward_trades.jsonl
 pc_btc_4h_alert_state.json
+
+# Separate operational paper order test state, trades and human report
+pc_sanal_emir_durum.json
+pc_sanal_emirler.jsonl
+pc_sanal_sonuc.txt
