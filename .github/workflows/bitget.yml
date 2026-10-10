@@ -1,11 +1,10 @@
 name: Bitget BTC ETH Sanal Takip (ucretsiz)
 
 'on':
-  push:
-    branches: [main]
-  schedule:
-    # GitHub scheduler best-effort, can delay or skip runs
-    - cron: '3-58/5 * * * *'
+  # Legacy GitHub paper bot disabled automatically:
+  # GitHub cron delays were sending repeated stale 4H Telegram alerts.
+  # Windows PC V7 WebSocket bot operates independently.
+  # Keep manual run available only for explicit diagnostics.
   workflow_dispatch:
 
 permissions:
