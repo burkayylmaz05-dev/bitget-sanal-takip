@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Audit frozen BTC 4H EMA20 pullback, actual last-90d funding settlements.
+"""Audit frozen BTC 4H EMA20 pullback, actual last-89d funding settlements.
 
 Uses identical entry/exit/stop/trail model from research_trend_v4.py with
 real Bitget V3 BTCUSDT settlement rates at actual timestamps, conservative
@@ -18,7 +18,7 @@ import research_trend_v4 as trend
 
 DAY=trend.DAY
 FOUR=trend.FOUR
-PERIOD=90
+PERIOD=89
 EQUITY=1000.
 METHOD='PULLBACK_BIDIR'
 URL='https://api.bitget.com/api/v3/market/history-fund-rate'
@@ -195,7 +195,7 @@ def main():
                 'funding_rates':len(fund),'funding_pages':fp,'4h_pages':pages},
         'without_funding':regular,'with_actual_funding':actual,
         'double_fees_slip_with_actual_funding':stressed,
-        'note':'Funding Mark price approximated with 4h open, precise funding timestamp. Recent 90d only. Backtest not forward orders.',
+        'note':'Funding Mark price approximated with 4h open, precise funding timestamp. Recent 89d only. Backtest not forward orders.',
     },ensure_ascii=False),flush=True)
 
 
