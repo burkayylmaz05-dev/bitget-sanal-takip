@@ -1,0 +1,20 @@
+name: Frozen 2025 External Check for 2026 Donchian Candidate
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_2025_frozen_donchian.py
+      - .github/workflows/research-2025-donchian.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax check
+        run: python3 -m py_compile research_2025_frozen_donchian.py
+      - name: Replay unchanged screened strategy rules on independent 2025
+        run: python3 -u research_2025_frozen_donchian.py
