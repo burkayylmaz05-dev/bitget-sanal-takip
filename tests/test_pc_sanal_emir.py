@@ -83,7 +83,7 @@ class PaperOrders(unittest.TestCase):
         self.assertEqual(account['losses'],1)
         self.assertLess(account['balance'],1000.0)
         self.assertEqual(account['wins'],0)
-        self.assertIn('STRATEJI',b.status())
+        self.assertIn('1 kapanan',b.status())
 
     def test_real_market_short_when_cross_down_and_take_profit(self):
         b=self.book
