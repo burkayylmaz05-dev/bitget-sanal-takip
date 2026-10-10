@@ -1,0 +1,35 @@
+name: Windows Paper Orders Offline Test
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - pc_sanal_emir.py
+      - pc_canli_bot.py
+      - tests/test_pc_sanal_emir.py
+      - .github/workflows/test-pc-paper-orders.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compile all relevant Windows modules
+        run: python3 -m py_compile pc_sanal_emir.py pc_canli_bot.py pc_btc_4h_alert.py pc_eth_forward.py
+      - name: Run entire offline no-orders unit test suite
+        run: python3 -m unittest discover -s tests -v
+      - name: Confirm no private order API in paper simulation
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          code = pathlib.Path('pc_sanal_emir.py').read_text(encoding='utf-8')
+          assert 'api_key' not in code.lower()
+          assert '/api/v2/mix/order/' not in code
+          assert 'placeOrder' not in code
+          print('Paper order engine is read-only, no Bitget real order endpoints.')
+          PY
