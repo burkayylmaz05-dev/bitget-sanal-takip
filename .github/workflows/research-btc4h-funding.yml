@@ -1,0 +1,20 @@
+name: BTC 4H Frozen Strategy Actual Funding Audit
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_btc4h_funding_audit.py
+      - .github/workflows/research-btc4h-funding.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  study:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - name: Python syntax check
+        run: python3 -m py_compile research_btc4h_funding_audit.py
+      - name: Actual last 90 day Bitget funding and historical futures candles
+        run: python3 -u research_btc4h_funding_audit.py
