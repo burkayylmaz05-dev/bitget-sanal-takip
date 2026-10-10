@@ -1,0 +1,37 @@
+name: V9 One-Click Paper Dashboard Tests
+'on':
+  push:
+    branches: [main]
+    paths:
+      - pc_sanal_v9.py
+      - tests/test_pc_sanal_v9.py
+      - .github/workflows/v9-one-click-tests.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate Python source offline
+        run: python3 -m py_compile pc_sanal_v9.py
+      - name: Run V9 and existing offline unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Live Bitget read-only REST smoke test
+        run: |
+          python3 - <<'PY'
+          import time
+          import pc_sanal_v9 as p
+          for sym in p.SYMBOLS:
+              px,stamp=p.ticker(sym)
+              print(sym,px,stamp)
+              assert px>0
+          for sym in p.SYMBOLS:
+              four=p.recent_closed_four(sym,p.utc_ms())
+              daily=p.daily_closed(sym,p.utc_ms())
+              print(sym,'4h',len(four),'daily',len(daily),
+                    'signal',p.signal_from_closed(sym,four,daily)[1])
+              assert len(four)>=100 and len(daily)>=550
+          PY
