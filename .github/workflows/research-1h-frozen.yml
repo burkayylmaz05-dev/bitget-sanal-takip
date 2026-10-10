@@ -1,0 +1,20 @@
+name: BTC ETH One Hour Frozen Strategy Comparison
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_1h_frozen_compare.py
+      - .github/workflows/research-1h-frozen.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  study:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test syntax and research assumptions
+        run: python3 -m py_compile research_1h_frozen_compare.py
+      - name: Frozen BTC ETH 600 day 1H validation study, no exchange orders
+        run: python3 -u research_1h_frozen_compare.py
