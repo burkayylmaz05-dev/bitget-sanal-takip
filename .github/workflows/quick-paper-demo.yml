@@ -1,0 +1,23 @@
+name: One-time BTC ETH historical paper demonstration
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_quick_paper_demo.py
+      - .github/workflows/quick-paper-demo.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compile and run real historical Bitget 5m paper trade replay
+        run: |
+          python3 -m py_compile research_quick_paper_demo.py
+          python3 -u research_quick_paper_demo.py
