@@ -1,0 +1,20 @@
+name: Year 2026 BTC ETH 4H Strategy Independent Validation
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_2026_4h_external_rules.py
+      - .github/workflows/research-2026-4h.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate strategy research syntax
+        run: python3 -m py_compile research_2026_4h_external_rules.py
+      - name: Fetch full real Bitget 2026 and 2025 warmup then simulate
+        run: python3 -u research_2026_4h_external_rules.py
