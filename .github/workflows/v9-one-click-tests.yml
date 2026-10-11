@@ -34,4 +34,9 @@ jobs:
               print(sym,'4h',len(four),'daily',len(daily),
                     'signal',p.signal_from_closed(sym,four,daily)[1])
               assert len(four)>=100 and len(daily)>=550
+          fast=p.recent_closed_fifteen(p.utc_ms())
+          ev,why=p.fast_signal_from_closed(fast)
+          print("BTC 15m",len(fast),"last closed",fast[-1][0],
+                "signal",why,"direction",ev and ev['direction'])
+          assert len(fast)>=285
           PY
