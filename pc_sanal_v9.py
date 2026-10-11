@@ -824,7 +824,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                    json.dumps(self.book.snapshot(), ensure_ascii=False)
                    .encode("utf-8"))
         self.send_response(200)
-        self.send_header("Content-Type", ("text/html" if self.path == "/" else
+        self.send_header("Content-Type", ("text/html" if route == "/" else
                                          "application/json") + "; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
