@@ -403,7 +403,7 @@ class Book:
             # Decline any late replay rather than silently opening trades.
             if now - decision_time > MAX_SIGNAL_DELAY_MS:
                 acc["last_bar"] = latest
-                acc["last_reason"] = "Eski mum atlandi, gecmis emir acilmadi"
+                acc["last_reason"] = "Yeni 4H kapanisi bekleniyor (eski emir acilmadi)"
                 self.save()
                 return
             ev, reason = signal_from_closed(symbol, bars, days)
@@ -618,7 +618,7 @@ def main():
                 with book.lock:
                     if len(book.prices) == len(SYMBOLS):
                         book.info["status"] = "CANLI SANAL TAKIP"
-                        book.info["updated_at"] = iso(now)
+                        book.info["updated_at"] = iso(utc_ms())
             if now >= next_scan:
                 next_scan = now + 15_000
                 for sym in SYMBOLS:
@@ -648,10 +648,17 @@ def main():
             raise
         except Exception as exc:
             print("Izleme tekrar deneniyor:", type(exc).__name__, str(exc)[:160])
+        # Re-read clock AFTER Bitget network requests. The timestamp captured
+        # at the TOP of this loop may be earlier than a valid fetched tick,
+        # incorrectly producing "VERI BEKLENIYOR" on a live connection.
+        health_now = utc_ms()
         with book.lock:
             fresh = [v.get("last_quote_at") for v in book.accounts.values()]
-            if not all(v and 0 <= now-v <= MAX_TICK_GAP_MS for v in fresh):
-                book.info["status"] = "VERI BEKLENIYOR"
+            book.info["status"] = (
+                "CANLI SANAL TAKIP" if
+                all(v is not None and 0 <= health_now - v <= MAX_TICK_GAP_MS
+                    for v in fresh)
+                else "VERI BEKLENIYOR")
         time.sleep(1)
 
 
