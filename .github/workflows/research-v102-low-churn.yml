@@ -1,0 +1,20 @@
+name: Low Churn BTC ETH 4H Trend Validation 2025 2026
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_v102_low_churn.py
+      - .github/workflows/research-v102-low-churn.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate study code
+        run: python3 -m py_compile research_v102_low_churn.py
+      - name: Evaluate low-churn 4H EMA and Donchian rules against actual Bitget history
+        run: python3 -u research_v102_low_churn.py
