@@ -124,7 +124,69 @@ class V9Tests(unittest.TestCase):
         obj = self.book.snapshot()
         self.assertFalse(obj['diagnostics']['ETHUSDT']['fresh'])
         self.assertIsNone(obj['diagnostics']['ETHUSDT']['age_seconds'])
-        self.assertEqual(obj['version'],'9.1')
+        self.assertEqual(obj['version'],'9.2')
+
+    def test_manual_90_second_paper_test_opens_and_closes_independently(self):
+        self.book.on_quote('BTCUSDT',83000.,self.now,self.now)
+        self.book.on_quote('ETHUSDT',2500.,self.now,self.now)
+        ok,msg=self.book.start_technical_test()
+        self.assertTrue(ok,msg)
+        self.assertEqual(len(self.book.technical['open']),2)
+        self.assertEqual(self.book.accounts['BTCUSDT']['closed'],0)
+        self.assertEqual(self.book.accounts['ETHUSDT']['closed'],0)
+        again, _ =self.book.start_technical_test()
+        self.assertFalse(again)
+        later=self.now+app.TECH_DURATION_MS+1000
+        self.book.on_quote('BTCUSDT',83000.,later,later)
+        self.book.on_quote('ETHUSDT',2500.,later,later)
+        self.assertEqual(len(self.book.technical['open']),0)
+        self.assertEqual(len(self.book.technical['history']),2)
+        self.assertTrue(all(x['net']<0 for x in self.book.technical['history']))
+        for sym in app.SYMBOLS:
+            self.assertEqual(self.book.accounts[sym]['equity'],1000.0)
+        self.assertEqual(self.book.accounts[app.FAST_ID]['equity'],1000.0)
+
+    def test_fast_15m_signal_creates_real_forward_paper_trade_separately(self):
+        start = app.fresh_15m(self.now) - 299*app.FIFTEEN
+        bars = []
+        for i in range(300):
+            close = 100 + i*.05 + (.5 if i==299 else 0)
+            bars.append((start+i*app.FIFTEEN,close-.02,
+                         close+.13,close-.13,close,100.))
+        signal,reason=app.fast_signal_from_closed(bars)
+        self.assertIsNotNone(signal,reason)
+        self.assertEqual(signal['direction'],1)
+        a=self.book.accounts[app.FAST_ID]
+        a['last_bar']=bars[-1][0]-app.FIFTEEN
+        fast_now=bars[-1][0]+app.FIFTEEN+11000
+        self.book.on_fast_15m_close(bars,fast_now,bars[-1][4],
+                                    fast_now-1000)
+        p=a['position']
+        self.assertIsNotNone(p)
+        self.assertEqual(p['direction'],1)
+        self.assertLessEqual(p['quantity']*p['entry'],1001.0)
+        self.assertEqual(self.book.accounts['BTCUSDT']['equity'],1000.0)
+        self.book.on_fast_15m_close(bars,fast_now,bars[-1][4],
+                                    fast_now-1000)
+        self.assertEqual(a['next_id'],2)
+        self.book.on_quote('BTCUSDT',p['stop']-1,fast_now+15000,
+                           fast_now+15000)
+        self.assertEqual(a['closed'],1)
+        self.assertIsNone(a['position'])
+        self.assertLess(a['equity'],1000)
+        self.assertEqual(self.book.accounts['BTCUSDT']['equity'],1000.)
+
+    def test_fast_trade_restart_unverified_without_fake_gain(self):
+        a=self.book.accounts[app.FAST_ID]
+        a['position']={'id':'TEST-0001','direction':1,'entry':100,
+                        'stop':90,'quantity':1.0,
+                        'trail_atr':3.2,'deadline_ms':self.now+10000}
+        self.book.save()
+        second=app.Book(folder=self.path,now=lambda:self.now+5000)
+        a2=second.accounts[app.FAST_ID]
+        self.assertEqual(a2['unverified'],1)
+        self.assertIsNone(a2['position'])
+        self.assertEqual(a2['equity'],1000.)
 
     def test_no_exchange_order_api_and_no_credentials_required(self):
         source=(Path(__file__).resolve().parent.parent/'pc_sanal_v9.py').read_text()
