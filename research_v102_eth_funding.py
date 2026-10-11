@@ -59,7 +59,7 @@ def rates(start,end):
 
 def replay(bars,dirs,exits,atrs,method,start,end,fund,fee=.0006,slip=.0003):
     eq=EQUITY;pos=None;peak=EQUITY;maxdd=0.;marked=eq
-    count=0;fund_total=0.;fund_paid=0;gross_wins=0
+    count=0;fund_total=0.;fund_paid=0;gross_wins=0;just_exited_at=None
     for i in range(301,len(bars)):
         t,o,h,l,c,vol=bars[i]
         if not start<=t<end:continue
@@ -78,12 +78,13 @@ def replay(bars,dirs,exits,atrs,method,start,end,fund,fee=.0006,slip=.0003):
                 eq+=pnl
                 count+=1;gross_wins+=int(pnl>0)
                 pos=None
+                just_exited_at=t
             else:
                 update=c-d*3.0*atrs[i]
                 p['stop']=max(p['stop'],update) if d==1 else min(p['stop'],update)
         if pos is None and previous_dir!=0 and eq>0:
             # Track a close on this bar exactly as original model.
-            exited=(locals().get('just_exited_at')==t)
+            exited=(just_exited_at==t)
             # Instead of relying on historical variable, set
             # just_exited_at whenever an old position closes below.
             if not exited:
@@ -97,6 +98,7 @@ def replay(bars,dirs,exits,atrs,method,start,end,fund,fee=.0006,slip=.0003):
                         fill=raw*(1-d*slip)
                         pnl=(fill-entry)*d*qty-fee*qty*(entry+fill)
                         eq+=pnl;count+=1;gross_wins+=int(pnl>0);pos=None
+                        just_exited_at=t
         if pos:
             p=pos;d=p['d'];fill=c*(1-d*slip)
             floating=(fill-p['entry'])*d*p['qty']-fee*p['qty']*(p['entry']+fill)
