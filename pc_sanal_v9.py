@@ -814,10 +814,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
     book = None
 
     def do_GET(self):
-        if self.path.split("?")[0] not in ("/", "/api/state"):
+        route = self.path.split("?", 1)[0]
+        if route not in ("/", "/api/state"):
             self.send_error(404)
             return
-        content = (PAGE.encode("utf-8") if self.path == "/" else
+        # A versioned URL forces a fresh HTML document, rather than leaving
+        # the user's previous V9.1 Chrome tab open on its old JS bundle.
+        content = (PAGE.encode("utf-8") if route == "/" else
                    json.dumps(self.book.snapshot(), ensure_ascii=False)
                    .encode("utf-8"))
         self.send_response(200)
@@ -859,7 +862,7 @@ def main():
         server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     except OSError:
         print("Panel zaten acik olabilir: http://127.0.0.1:%d" % PORT)
-        webbrowser.open("http://127.0.0.1:%d/" % PORT)
+        webbrowser.open_new_tab("http://127.0.0.1:%d/?v=9.2" % PORT)
         return
     # Lock port BEFORE loading state: second launcher must not mark an
     # already running paper position as unverified and overwrite disk state.
@@ -872,8 +875,9 @@ def main():
     threading.Thread(target=server.serve_forever, daemon=True).start()
     print("PANEL: http://127.0.0.1:%d/" % PORT, flush=True)
     print("Excel islemler: %s" % LOG_PATH.name, flush=True)
-    threading.Thread(target=lambda: webbrowser.open(
-        "http://127.0.0.1:%d/" % PORT), daemon=True).start()
+    threading.Thread(target=lambda: webbrowser.open_new_tab(
+        "http://127.0.0.1:%d/?v=9.2&fresh=%d" % (PORT, int(time.time()))),
+        daemon=True).start()
     daily_cache = {}
     next_tickers = 0
     next_scan = 0
