@@ -435,6 +435,43 @@ class Book:
                 self._notify(symbol + " SANAL TAKIP DURAKLADI: fiyat araligi "
                              "belirsiz, kar/zarar hesaplanmadi.")
             account["last_quote_at"] = stamp
+            if symbol == "BTCUSDT":
+                fast = self.accounts[FAST_ID]
+                fp = fast["position"]
+                old_fast_tick = fast.get("last_quote_at")
+                if fp and old_fast_tick and now-old_fast_tick>MAX_TICK_GAP_MS:
+                    self._log("DOGRULANAMADI", FAST_ID, fp, None, None,
+                              "15m fiyat akisi kesildi")
+                    fast["unverified"] += 1
+                    fast["position"] = None
+                    fast["last_reason"] = "15m ara fiyatlar kayip"
+                fast["last_quote_at"] = stamp
+                fp = fast["position"]
+                if fp:
+                    d = fp["direction"]
+                    hit = (raw<=fp["stop"] if d==1 else raw>=fp["stop"])
+                    if hit:
+                        fill_raw=min(raw,fp["stop"]) if d==1 else max(raw,fp["stop"])
+                        self._close(FAST_ID,fill_raw,"15m STOP",now)
+                    elif now>=fp["deadline_ms"]:
+                        self._close(FAST_ID,raw,"15m 168 SAAT",now)
+            remaining = []
+            for test in self.technical["open"]:
+                if test["symbol"]!=symbol or now<test["deadline_ms"]:
+                    remaining.append(test)
+                    continue
+                d=test["direction"]
+                fill=raw*(1-d*SLIP)
+                net=(fill-test["entry"])*d*test["quantity"]
+                net-=FEE*(test["entry"]+fill)*test["quantity"]
+                outcome={"symbol":symbol,"direction":d,
+                         "entry":round(test["entry"],4),
+                         "exit":round(fill,4),"net":round(net,4),
+                         "reason":"90 SN TEKNIK TEST","closed_at":iso(now)}
+                self.technical["history"].append(outcome)
+                self.technical["history"]=self.technical["history"][-12:]
+                print("SANAL TEKNIK TEST KAPANDI",outcome,flush=True)
+            self.technical["open"]=remaining
             position = account["position"]
             if position:
                 d = position["direction"]
