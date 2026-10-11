@@ -1,0 +1,20 @@
+name: V10.1 5m Cost-Robust Strategy Research
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_v101_5m_robust.py
+      - .github/workflows/v101-5m-robust.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Compile no-trade historical study
+        run: python3 -m py_compile research_v101_5m_robust.py
+      - name: Review Bitget 5m BTC ETH actual 120-day historical candles
+        run: python3 -u research_v101_5m_robust.py
