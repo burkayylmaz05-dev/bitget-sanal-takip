@@ -516,6 +516,93 @@ class Book:
         print(msg, flush=True)
         self._notify(msg)
 
+    def start_technical_test(self):
+        """Manual 90-second real-ticker test; never counted as strategy PnL."""
+        with self.lock:
+            if self.technical["open"]:
+                return False, "Test zaten devam ediyor"
+            now=self.now()
+            tests=[]
+            for sym,d in (("BTCUSDT",1),("ETHUSDT",-1)):
+                q=self.prices.get(sym)
+                stamp=self.accounts[sym].get("last_quote_at")
+                if not q or stamp is None or not -CLOCK_SKEW_MS<=now-stamp<=FRESH_TICK_MS:
+                    return False, sym+" guncel fiyat bekleniyor"
+                entry=q["price"]*(1+d*SLIP)
+                tests.append({"symbol":sym,"direction":d,"entry":entry,
+                              "quantity":100.0/entry,"opened_ms":now,
+                              "deadline_ms":now+TECH_DURATION_MS})
+            self.technical["open"]=tests
+            self.save()
+            print("90 SN SANAL TEKNIK TEST ACILDI: BTC LONG, ETH SHORT",flush=True)
+            return True, "BTC LONG + ETH SHORT 90 saniyelik sanal teknik test basladi"
+
+    def on_fast_15m_close(self,bars,now,price,quote_at):
+        with self.lock:
+            acc=self.accounts[FAST_ID]
+            newest=bars[-1][0]
+            if newest<=acc["last_bar"]:
+                return
+            if newest!=fresh_15m(now):
+                raise RuntimeError("Bitget BTC 15m mum kapanisi eksik")
+            if now-(newest+FIFTEEN)>MAX_SIGNAL_DELAY_MS:
+                acc["last_bar"]=newest
+                acc["last_reason"]="15m gecmis mum atlandi; yeni emir uydurulmadi"
+                self.save()
+                return
+            ev,reason=fast_signal_from_closed(bars)
+            acc["last_bar"]=newest
+            acc["last_reason"]=reason
+            if acc["position"] is not None:
+                p=acc["position"]
+                updated=bars[-1][4]-p["direction"]*p["trail_atr"]*atr(bars)
+                p["stop"]=max(p["stop"],updated) if p["direction"]==1 else min(p["stop"],updated)
+                self.save()
+                return
+            if ev is None:
+                self.save()
+                return
+            if (price is None or quote_at is None or
+                not -CLOCK_SKEW_MS<=now-quote_at<=FRESH_TICK_MS):
+                acc["last_reason"]="15m sinyal var, taze fiyat yok"
+                self.save()
+                return
+            if abs(price-ev["reference"])>.5*ev["atr"]:
+                acc["last_reason"]="15m sinyal, giris fiyati cok uzak"
+                self.save()
+                return
+            d=ev["direction"]
+            fill=price*(1+d*SLIP)
+            distance=(fill-ev["stop"])*d
+            if distance<=0 or acc["equity"]<=0:
+                acc["last_reason"]="15m sanal risk gecersiz"
+                self.save()
+                return
+            qty=min(acc["equity"]*RISK/distance,
+                    acc["equity"]*MAX_NOTIONAL/fill)
+            if qty<=0:
+                acc["last_reason"]="15m hesapta sanal pozisyon acilamadi"
+                self.save()
+                return
+            p={"id":f"{FAST_ID}-{acc['next_id']:05d}",
+               "direction":d,"entry":fill,"quantity":qty,
+               "stop":ev["stop"],"trail_atr":ev["trail_atr"],
+               "opened_ms":now,"deadline_ms":now+168*60*60*1000,
+               "strategy":"BTC 15DK DONCHIAN55 DENEYSEL",
+               "signal_at":ev["signal_at"]}
+            acc["next_id"]+=1
+            acc["position"]=p
+            acc["last_signal"]=iso(now)
+            acc["last_reason"]="15m otomatik sanal emir ACILDI"
+            self._log("SANAL_ACILIS",FAST_ID,p,None,None,p["strategy"])
+            self.save()
+            msg=(f"BTC 15DK DENEYSEL SANAL {'LONG' if d==1 else 'SHORT'} ACILDI\n"
+                 f"Giris: {fill:.2f} / Stop: {ev['stop']:.2f}\n"
+                 f"Nominal: {qty*fill:.2f} USDT\n"
+                 "Gercek emir YOK. 2x maliyet tarihi testte ZARAR.")
+            print(msg,flush=True)
+            self._notify(msg)
+
     def on_4h_close(self, symbol, bars, days, now, price, quote_at):
         with self.lock:
             acc = self.accounts[symbol]
