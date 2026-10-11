@@ -1,0 +1,20 @@
+name: Frozen ETH 4H EMA Historical 2024 Robustness
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_v102_eth_2024.py
+      - .github/workflows/research-v102-eth-2024.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retrospective:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate research code
+        run: python3 -m py_compile research_v102_eth_2024.py
+      - name: Use frozen ETH 4H model across independent 2024 2025 2026 dates
+        run: python3 -u research_v102_eth_2024.py
