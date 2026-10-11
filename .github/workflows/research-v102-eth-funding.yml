@@ -1,0 +1,20 @@
+name: ETH 4H Live Funding Rate Historical Audit
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_v102_eth_funding.py
+      - .github/workflows/research-v102-eth-funding.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax check
+        run: python3 -m py_compile research_v102_eth_funding.py
+      - name: Verify ETH actual last 88d funding, fees and double cost on frozen trend
+        run: python3 -u research_v102_eth_funding.py
