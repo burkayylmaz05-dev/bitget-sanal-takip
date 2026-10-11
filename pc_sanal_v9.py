@@ -827,12 +827,31 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
+    def do_POST(self):
+        if (self.path != "/api/test" or
+                self.headers.get("Content-Type", "").split(";")[0] != "application/json"):
+            self.send_error(404)
+            return
+        origin=self.headers.get("Origin")
+        if origin and origin != "http://127.0.0.1:%d" % PORT:
+            self.send_error(403)
+            return
+        ok,message=self.book.start_technical_test()
+        data=json.dumps({"ok":ok,"message":message},
+                        ensure_ascii=False).encode("utf-8")
+        self.send_response(200 if ok else 409)
+        self.send_header("Content-Type","application/json; charset=utf-8")
+        self.send_header("Cache-Control","no-store")
+        self.send_header("Content-Length",str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def log_message(self, fmt, *args):
         pass
 
 
 def main():
-    print("\nBITGET SANAL PANEL V9.1 - GERCEK EMIR GONDERMEZ", flush=True)
+    print("\nBITGET SANAL PANEL V9.2 - GERCEK EMIR GONDERMEZ", flush=True)
     print("Bitget public BTC ETH verisi | BTC Donchian20 / ETH Donchian55 4H", flush=True)
     try:
         server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
@@ -856,10 +875,12 @@ def main():
     daily_cache = {}
     next_tickers = 0
     next_scan = 0
+    next_fast_scan = 0
     while True:
         now = utc_ms()
         with book.lock:
             book.info["next_4h_at"] = iso(((now // FOUR) + 1) * FOUR)
+            book.info["next_15m_at"] = iso(((now // FIFTEEN) + 1) * FIFTEEN)
         try:
             if now >= next_tickers:
                 next_tickers = now + 20_000
@@ -875,6 +896,20 @@ def main():
                     book.info["error"] = " | ".join(tick_errors) if tick_errors else None
                     if len(book.prices) == len(SYMBOLS):
                         book.info["updated_at"] = iso(utc_ms())
+            if now >= next_fast_scan:
+                next_fast_scan = now + 8_000
+                if fresh_15m(now) > book.accounts[FAST_ID]["last_bar"]:
+                    try:
+                        bars = recent_closed_fifteen(utc_ms())
+                        quote = book.prices.get("BTCUSDT")
+                        stamp = book.accounts["BTCUSDT"].get("last_quote_at")
+                        book.on_fast_15m_close(
+                            bars,utc_ms(),quote["price"] if quote else None,stamp)
+                    except Exception as exc:
+                        with book.lock:
+                            book.info["error"] = "BTC 15m: " + str(exc)[:110]
+                        print("BTC 15m kontrol:",type(exc).__name__,
+                              str(exc)[:130],flush=True)
             if now >= next_scan:
                 next_scan = now + 15_000
                 for sym in SYMBOLS:
@@ -909,7 +944,7 @@ def main():
         # incorrectly producing "VERI BEKLENIYOR" on a live connection.
         health_now = utc_ms()
         with book.lock:
-            fresh = [v.get("last_quote_at") for v in book.accounts.values()]
+            fresh = [book.accounts[s].get("last_quote_at") for s in SYMBOLS]
             book.info["status"] = (
                 "CANLI SANAL TAKIP" if
                 all(v is not None and -CLOCK_SKEW_MS <= health_now - v <= MAX_TICK_GAP_MS
