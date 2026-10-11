@@ -188,6 +188,31 @@ class V9Tests(unittest.TestCase):
         self.assertIsNone(a2['position'])
         self.assertEqual(a2['equity'],1000.)
 
+    def test_versioned_browser_url_returns_fresh_v92_html(self):
+        # Old tab on / can keep V9.1 static HTML. New launcher must open
+        # /?v=9.2 with a cache buster and serve HTML, never a JSON document.
+        import http.server
+        import threading
+        import urllib.request
+        app.Handler.book = self.book
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            root=f"http://127.0.0.1:{server.server_address[1]}"
+            with urllib.request.urlopen(root+"/?v=9.2&fresh=123",timeout=4) as r:
+                html=r.read().decode("utf-8")
+                self.assertIn("text/html",r.headers.get("Content-Type",""))
+            self.assertIn("V9.2",html)
+            self.assertIn("15 dakika",html)
+            with urllib.request.urlopen(root+"/api/state?test=1",timeout=4) as r:
+                data=json.load(r)
+            self.assertEqual(data["version"],"9.2")
+            self.assertIn("BTC15M",data["accounts"])
+        finally:
+            server.shutdown()
+            server.server_close()
+
     def test_no_exchange_order_api_and_no_credentials_required(self):
         source=(Path(__file__).resolve().parent.parent/'pc_sanal_v9.py').read_text()
         self.assertNotIn('mix/order/place-order',source)
