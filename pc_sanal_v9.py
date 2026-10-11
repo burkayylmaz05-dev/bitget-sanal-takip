@@ -702,10 +702,24 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
 @media(max-width:540px){body{padding:15px}h1{font-size:20px}.money{font-size:26px}}
 </style></head>
 <body>
-<div class="top"><div><h1>Bitget BTC + ETH | Sanal Islem Paneli <span class="muted small">V9.1</span></h1>
+<div class="top"><div><h1>Bitget BTC + ETH | Sanal Islem Paneli <span class="muted small">V9.2</span></h1>
 <div class="muted small">Gercek hesap baglantisi yok. Para kullanilmaz, borsaya emir gitmez.</div></div>
 <div><span class="tag" id="stat">Baglaniyor</span><div class="small muted" id="refreshed"></div><div class="small muted" id="nextcheck"></div><div class="small muted" id="healthinfo"></div></div></div>
 <div class="grid" id="coins"><div class="card">Bitget verisi bekleniyor...</div></div>
+<div style="height:18px"></div>
+<div class="grid">
+ <div class="card">
+  <h2>BTC 15 dakika | DENEYSEL otomatik sanal bot</h2>
+  <p class="muted small">4 saatlik hesaplardan AYRI 1.000 USDT. Son 40 gunluk 2026 tarihsel testinde 30 islem, +%2,22. Masraf 2 katina cikarsa -%1,73. Kâr garantisi yok.</p>
+  <div id="fast">15 dakikalik mumlar taraniyor...</div>
+ </div>
+ <div class="card">
+  <h2>Hemen gor: 90 saniyelik SANAL teknik test</h2>
+  <p class="muted small">Gercek BTC/ETH fiyatlari ile BTC LONG, ETH SHORT 100'er USDT sanal pozisyon acilir. 90 saniye sonra kapanir. STRATEJI SINYALI DEGILDIR, ana bakiyelere eklenmez.</p>
+  <button onclick="startTechnical()" id="technicalButton">90 SN SANAL TEST AC</button>
+  <p id="tech" class="data muted">Henuz teknik test baslatilmadi.</p>
+ </div>
+</div>
 <div style="height:18px"></div>
 <div class="card"><h2>2026 gercek piyasa verisiyle tarihsel sanal test</h2>
 <p class="muted small">Bu bolumdeki sonuclar gecmiste yapilan simülasyondur. Ustteki bakiye ve islemler ise yalnizca bu program acikken ileriye donuk birikir. Iki kat masraf testi dahildir.</p>
@@ -754,6 +768,23 @@ async function render(){
  document.getElementById('nextcheck').textContent='Sonraki 4H mum: '+dtfmt(d.status.next_4h_at);
  document.getElementById('healthinfo').textContent=['BTCUSDT','ETHUSDT'].map(s=>s.replace('USDT','')+': '+(d.diagnostics[s].age_seconds===null?'fiyat gelmedi':d.diagnostics[s].age_seconds+' sn')).join(' | ') + (d.status.error ? ' | HATA: '+d.status.error : '');
  document.getElementById('coins').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>sHtml(s,d)).join('');
+ const a=d.accounts.BTC15M,p=a.position,net=a.equity-1000;
+ document.getElementById('fast').innerHTML=
+  '<div class="row"><span class="label">Sanal bakiye</span><strong>'+n(a.equity,2)+' USDT</strong></div>'
+  +'<div class="row"><span class="label">Gerceklesen sanal net</span><strong class="'+(net>=0?'green':'red')+'">'+sign(net)+' USDT</strong></div>'
+  +'<div class="row"><span class="label">Kapanan / kazanan / kaybeden</span><strong>'+a.closed+' / '+a.wins+' / '+a.losses+'</strong></div>'
+  +(p?'<p class="tag">15DK SANAL '+(p.direction===1?'LONG':'SHORT')+' ACIK</p><p>Giris: '+n(p.entry,2)+' | Stop: '+n(p.stop,2)+'</p>':'<p class="muted">15DK strateji sinyali bekleniyor.</p>')
+  +'<p class="muted small">Son kontrol: '+a.last_reason+'</p>';
+ const tech=d.technical;
+ const outs=tech.history.slice(-4).reverse().map(x=>
+  x.net===null?'<div class="small muted">'+x.reason+'</div>':
+  '<div class="small '+(x.net>=0?'green':'red')+'">'+x.symbol+' '+(x.direction===1?'LONG':'SHORT')+': '+sign(x.net)+' USDT ('+n(x.entry,2)+' → '+n(x.exit,2)+')</div>').join('');
+ document.getElementById('tech').innerHTML=
+  (tech.open.length?
+   '<strong class="green">ACIK: '+tech.open.map(x=>x.symbol+' '+(x.direction===1?'LONG':'SHORT')+' | '+Math.max(0,Math.ceil((x.deadline_ms-Date.now())/1000))+' sn').join(' / ')+'</strong><p class="muted small">Gercek Bitget fiyatlariyla kapanis bekleniyor.</p>':
+    '<span class="muted">Su an acik teknik test yok.</span>')
+   +(outs?'<hr>'+outs:'');
+ document.getElementById('technicalButton').disabled=tech.open.length>0;
  document.getElementById('research').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>{
   const x=d.historical_research[s];
   return '<div><strong>'+s+'</strong><div class="row"><span class="label">Ocak-Mayis 2026 ('+x.jan_may_trades+' islem)</span><strong class="green">+%'+n(x.jan_may,2)+'</strong></div>'
@@ -761,6 +792,17 @@ async function render(){
  +'<div class="row"><span class="label">Son donem 2x maliyet</span><strong class="green">+%'+n(x.double_cost,2)+'</strong></div><p class="muted small">'+x.caveat+'</p></div>'}).join('');
  document.getElementById('tg').textContent=d.telegram_active?'Telegram: onceki klasordeki ayarlar kullaniliyor.':'Telegram: bu klasorde ayar dosyasi yok; panel ve CSV kaydi yine calisir.';
  }catch(e){document.getElementById('stat').textContent='Baglanti bekleniyor'}
+}
+async function startTechnical(){
+ const b=document.getElementById('technicalButton');
+ b.disabled=true;
+ try{
+  const r=await fetch('/api/test',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:'{}'});
+  const result=await r.json();
+  document.getElementById('tech').textContent=result.message;
+ }catch(e){document.getElementById('tech').textContent='Baglanti hatasi: '+String(e)}
+ await render();
 }
 render();setInterval(render,5000);
 </script></body></html>"""
