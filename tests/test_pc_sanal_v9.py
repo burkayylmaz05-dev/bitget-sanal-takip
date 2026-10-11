@@ -213,6 +213,17 @@ class V9Tests(unittest.TestCase):
             server.shutdown()
             server.server_close()
 
+    def test_dashboard_only_shows_live_accounts_not_historical_examples(self):
+        html=app.PAGE
+        self.assertIn('id="coins"',html)
+        self.assertIn('id="fast"',html)
+        self.assertIn('id="tech"',html)
+        self.assertNotIn('2026 gecmis sanal islemlerinden',html)
+        self.assertNotIn('tarihsel sanal test</h2>',html)
+        self.assertNotIn('id="research"',html)
+        self.assertNotIn("getElementById('research')",html)
+        self.assertNotIn('24.07.2026',html)
+
     def test_no_exchange_order_api_and_no_credentials_required(self):
         source=(Path(__file__).resolve().parent.parent/'pc_sanal_v9.py').read_text()
         self.assertNotIn('mix/order/place-order',source)
