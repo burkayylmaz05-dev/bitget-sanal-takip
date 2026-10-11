@@ -21,7 +21,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-VERSION = "9.0"
+VERSION = "9.1"
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "v9_sanal_durum.json"
 LOG_PATH = ROOT / "v9_sanal_islemler.csv"
@@ -38,6 +38,7 @@ RISK = .005
 MAX_NOTIONAL = 1.0
 FRESH_TICK_MS = 60_000
 MAX_TICK_GAP_MS = 180_000
+CLOCK_SKEW_MS = 15_000  # tolerate ordinary Bitget-vs-Windows clock drift
 MAX_SIGNAL_DELAY_MS = 120_000
 PORT = 8765
 
@@ -317,8 +318,25 @@ class Book:
 
     def snapshot(self):
         with self.lock:
+            moment = self.now()
+            diagnostics = {
+                sym: {
+                    "age_seconds": (
+                        round(max(0, moment - acc["last_quote_at"]) / 1000, 1)
+                        if acc.get("last_quote_at") is not None else None
+                    ),
+                    "last_tick_utc": (iso(acc["last_quote_at"])
+                                      if acc.get("last_quote_at") else None),
+                    "fresh": (
+                        -CLOCK_SKEW_MS <= moment - acc["last_quote_at"] <= MAX_TICK_GAP_MS
+                        if acc.get("last_quote_at") is not None else False
+                    )
+                }
+                for sym, acc in self.accounts.items()
+            }
             return {
-                "version": VERSION, "now_utc": iso(self.now()),
+                "version": VERSION, "now_utc": iso(moment),
+                "diagnostics": diagnostics,
                 "status": dict(self.info),
                 "quotes": {s: self.prices.get(s) for s in SYMBOLS},
                 "accounts": json.loads(json.dumps(self.accounts)),
@@ -331,7 +349,9 @@ class Book:
         now = self.now() if now is None else now
         if symbol not in SYMBOLS or not math.isfinite(raw) or raw <= 0:
             return
-        if not 0 <= now - stamp <= FRESH_TICK_MS:
+        # A small exchange/server clock offset must not freeze the entire UI.
+        # Never accept prices older than 60 seconds.
+        if not -CLOCK_SKEW_MS <= now - stamp <= FRESH_TICK_MS:
             return
         with self.lock:
             account = self.accounts[symbol]
@@ -420,7 +440,8 @@ class Book:
             if not ev:
                 self.save()
                 return
-            if price is None or quote_at is None or not 0 <= now-quote_at <= FRESH_TICK_MS:
+            if (price is None or quote_at is None or
+                    not -CLOCK_SKEW_MS <= now-quote_at <= FRESH_TICK_MS):
                 acc["last_reason"] = "Sinyal var, guncel fiyat yok"
                 self.save()
                 return
@@ -489,9 +510,9 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
 @media(max-width:540px){body{padding:15px}h1{font-size:20px}.money{font-size:26px}}
 </style></head>
 <body>
-<div class="top"><div><h1>Bitget BTC + ETH | Sanal Islem Paneli</h1>
+<div class="top"><div><h1>Bitget BTC + ETH | Sanal Islem Paneli <span class="muted small">V9.1</span></h1>
 <div class="muted small">Gercek hesap baglantisi yok. Para kullanilmaz, borsaya emir gitmez.</div></div>
-<div><span class="tag" id="stat">Baglaniyor</span><div class="small muted" id="refreshed"></div><div class="small muted" id="nextcheck"></div></div></div>
+<div><span class="tag" id="stat">Baglaniyor</span><div class="small muted" id="refreshed"></div><div class="small muted" id="nextcheck"></div><div class="small muted" id="healthinfo"></div></div></div>
 <div class="grid" id="coins"><div class="card">Bitget verisi bekleniyor...</div></div>
 <div style="height:18px"></div>
 <div class="card"><h2>2026 gercek piyasa verisiyle tarihsel sanal test</h2>
@@ -539,6 +560,7 @@ async function render(){
  document.getElementById('stat').textContent=d.status.status;
  document.getElementById('refreshed').textContent='Son yenileme: '+dtfmt(d.now_utc);
  document.getElementById('nextcheck').textContent='Sonraki 4H mum: '+dtfmt(d.status.next_4h_at);
+ document.getElementById('healthinfo').textContent=['BTCUSDT','ETHUSDT'].map(s=>s.replace('USDT','')+': '+(d.diagnostics[s].age_seconds===null?'fiyat gelmedi':d.diagnostics[s].age_seconds+' sn')).join(' | ') + (d.status.error ? ' | HATA: '+d.status.error : '');
  document.getElementById('coins').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>sHtml(s,d)).join('');
  document.getElementById('research').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>{
   const x=d.historical_research[s];
@@ -576,7 +598,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 def main():
-    print("\nBITGET SANAL PANEL V9 - GERCEK EMIR GONDERMEZ", flush=True)
+    print("\nBITGET SANAL PANEL V9.1 - GERCEK EMIR GONDERMEZ", flush=True)
     print("Bitget public BTC ETH verisi | BTC Donchian20 / ETH Donchian55 4H", flush=True)
     try:
         server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
@@ -607,17 +629,17 @@ def main():
         try:
             if now >= next_tickers:
                 next_tickers = now + 20_000
+                tick_errors = []
                 for sym in SYMBOLS:
                     try:
                         px, stamp = ticker(sym)
                         book.on_quote(sym, px, stamp, now=utc_ms())
                     except Exception as exc:
-                        with book.lock:
-                            book.info["error"] = (sym + ": " + str(exc)[:120])
-                        print("Fiyat kontrolu:", sym, type(exc).__name__, str(exc)[:120])
+                        tick_errors.append(sym + ": " + str(exc)[:100])
+                        print("Fiyat kontrolu:", sym, type(exc).__name__, str(exc)[:120], flush=True)
                 with book.lock:
+                    book.info["error"] = " | ".join(tick_errors) if tick_errors else None
                     if len(book.prices) == len(SYMBOLS):
-                        book.info["status"] = "CANLI SANAL TAKIP"
                         book.info["updated_at"] = iso(utc_ms())
             if now >= next_scan:
                 next_scan = now + 15_000
@@ -656,7 +678,7 @@ def main():
             fresh = [v.get("last_quote_at") for v in book.accounts.values()]
             book.info["status"] = (
                 "CANLI SANAL TAKIP" if
-                all(v is not None and 0 <= health_now - v <= MAX_TICK_GAP_MS
+                all(v is not None and -CLOCK_SKEW_MS <= health_now - v <= MAX_TICK_GAP_MS
                     for v in fresh)
                 else "VERI BEKLENIYOR")
         time.sleep(1)
