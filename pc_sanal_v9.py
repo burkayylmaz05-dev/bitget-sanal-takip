@@ -715,7 +715,7 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
  </div>
  <div class="card">
   <h2>Hemen gor: 90 saniyelik SANAL teknik test</h2>
-  <p class="muted small">Gercek BTC/ETH fiyatlari ile BTC LONG, ETH SHORT 100'er USDT sanal pozisyon acilir. 90 saniye sonra kapanir. STRATEJI SINYALI DEGILDIR, ana bakiyelere eklenmez.</p>
+  <p class="muted small">Ilk acilista BTC LONG ve ETH SHORT 100'er USDT ile 90 saniyelik TEKNIK TEST otomatik baslar. STRATEJI SINYALI DEGILDIR. Bu testin sonucu ana bakiyelere eklenmez. Tekrar denemek istersen asagidaki dugmeyi kullan.</p>
   <button onclick="startTechnical()" id="technicalButton">90 SN SANAL TEST AC</button>
   <p id="tech" class="data muted">Henuz teknik test baslatilmadi.</p>
  </div>
@@ -878,6 +878,11 @@ def main():
     next_tickers = 0
     next_scan = 0
     next_fast_scan = 0
+    # A one-time, explicitly labeled paper execution demonstration.
+    # Never repeat after it finishes or becomes unverifiable, and never
+    # credit its PnL to an automated trading strategy or account.
+    startup_technical_pending = not (
+        book.technical.get("open") or book.technical.get("history"))
     while True:
         now = utc_ms()
         with book.lock:
@@ -898,6 +903,12 @@ def main():
                     book.info["error"] = " | ".join(tick_errors) if tick_errors else None
                     if len(book.prices) == len(SYMBOLS):
                         book.info["updated_at"] = iso(utc_ms())
+                if startup_technical_pending:
+                    started, why = book.start_technical_test()
+                    if started:
+                        startup_technical_pending = False
+                        print("OTO TEKNIK TEST: 90 saniye sonra sadece "
+                              "sanal LONG/SHORT sonuclari gorunecek.", flush=True)
             if now >= next_fast_scan:
                 next_fast_scan = now + 8_000
                 if fresh_15m(now) > book.accounts[FAST_ID]["last_bar"]:
