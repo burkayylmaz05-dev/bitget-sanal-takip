@@ -106,6 +106,26 @@ class V9Tests(unittest.TestCase):
         csv=(self.path/app.LOG_PATH.name).read_text(encoding='utf-8-sig')
         self.assertIn('DOGRULANAMADI',csv)
 
+    def test_exchange_clock_ahead_does_not_freeze_status(self):
+        # Valid Bitget quote may be milliseconds/seconds ahead of local clock.
+        self.book.on_quote('BTCUSDT', 83000., self.now + 8000, self.now)
+        self.book.on_quote('ETHUSDT', 2500., self.now + 3000, self.now)
+        status = self.book.snapshot()
+        self.assertTrue(status['diagnostics']['BTCUSDT']['fresh'])
+        self.assertTrue(status['diagnostics']['ETHUSDT']['fresh'])
+        self.assertEqual(status['diagnostics']['BTCUSDT']['age_seconds'], 0.)
+        # Excessive future skew and stale quotes must remain rejected.
+        self.book.on_quote('BTCUSDT', 1., self.now + 20000, self.now)
+        self.assertEqual(self.book.prices['BTCUSDT']['price'],83000.)
+        self.book.on_quote('ETHUSDT', 1., self.now - 61000, self.now)
+        self.assertEqual(self.book.prices['ETHUSDT']['price'],2500.)
+
+    def test_status_snapshot_shows_missing_quotation(self):
+        obj = self.book.snapshot()
+        self.assertFalse(obj['diagnostics']['ETHUSDT']['fresh'])
+        self.assertIsNone(obj['diagnostics']['ETHUSDT']['age_seconds'])
+        self.assertEqual(obj['version'],'9.1')
+
     def test_no_exchange_order_api_and_no_credentials_required(self):
         source=(Path(__file__).resolve().parent.parent/'pc_sanal_v9.py').read_text()
         self.assertNotIn('mix/order/place-order',source)
