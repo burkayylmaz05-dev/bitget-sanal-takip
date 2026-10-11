@@ -262,23 +262,19 @@ class Book:
                      "updated_at": None, "next_4h_at": None}
         self.prices = {}
         self.telegram = self._load_telegram()
-        if self.state_path.exists():
+        loaded = self.state_path.exists()
+        if loaded:
             saved = json.loads(self.state_path.read_text(encoding="utf-8"))
             if saved.get("version") != 9:
                 raise RuntimeError("Eski kayit farkli surum; verileri silmedim")
             self.accounts = saved["accounts"]
-            for sym in SYMBOLS:
-                acc = self.accounts[sym]
-                # Preserve pending trade but do not hallucinate unattended
-                # stops and fills during downtime: mark as unresolved.
-                if acc["position"] is not None:
-                    p = acc["position"]
-                    self._log("DOGRULANAMADI", sym, p, None, None,
-                              "Bilgisayar kapaliyken fiyat yolu bilinmiyor")
-                    acc["unverified"] = acc.get("unverified", 0) + 1
-                    acc["position"] = None
-                    self._notify(sym + " SANAL POZISYON DOGRULANAMADI: "
-                                 "Bot durmustu; kar veya zarar yazilmadi.")
+            self.technical = saved.get("technical", {"open": [], "history": []})
+            if self.technical.get("open"):
+                self.technical["open"] = []
+                self.technical["history"].append({
+                    "symbol": "TEST", "net": None,
+                    "reason": "BOT_KAPANDI_SONUC_DOGRULANAMADI",
+                    "closed_at": iso(self.now())})
         else:
             self.accounts = {
                 sym: {"equity": SEED, "peak": SEED, "worst_dd": 0.,
@@ -286,9 +282,28 @@ class Book:
                       "unverified": 0, "position": None,
                       "last_bar": fresh_4h(self.now()),
                       "last_quote_at": None, "last_signal": None,
-                      "last_reason": "Yeni 4H mum bekleniyor",
-                      "next_id": 1}
+                      "last_reason": "Yeni 4H mum bekleniyor", "next_id": 1}
                 for sym in SYMBOLS}
+            self.technical = {"open": [], "history": []}
+        if FAST_ID not in self.accounts:
+            self.accounts[FAST_ID] = {
+                "equity": SEED, "peak": SEED, "worst_dd": 0.,
+                "wins": 0, "losses": 0, "closed": 0,
+                "unverified": 0, "position": None,
+                "last_bar": fresh_15m(self.now()), "last_quote_at": None,
+                "last_signal": None, "last_reason": "15m kapanisi bekleniyor",
+                "next_id": 1}
+        if loaded:
+            for sym in (*SYMBOLS, FAST_ID):
+                acc = self.accounts[sym]
+                if acc["position"] is not None:
+                    p = acc["position"]
+                    self._log("DOGRULANAMADI", sym, p, None, None,
+                              "Program yeniden basladi, ara fiyatlar bilinmiyor")
+                    acc["unverified"] += 1
+                    acc["position"] = None
+                    self._notify(sym + " SANAL POZISYON DOGRULANAMADI: "
+                                 "Bot durmustu; kar veya zarar yazilmadi.")
         self.save()
 
     def _load_telegram(self):
@@ -357,7 +372,8 @@ class Book:
 
     def save(self):
         tmp = self.state_path.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps({"version": 9, "accounts": self.accounts},
+        tmp.write_text(json.dumps({"version": 9, "accounts": self.accounts,
+                                   "technical": self.technical},
                                   ensure_ascii=False, indent=2), encoding="utf-8")
         tmp.replace(self.state_path)
 
@@ -386,6 +402,13 @@ class Book:
                 "quotes": {s: self.prices.get(s) for s in SYMBOLS},
                 "accounts": json.loads(json.dumps(self.accounts)),
                 "historical_research": RESEARCH,
+                "experimental_research": {
+                    "BTC15M": {"first_40d_pct": 9.4,
+                               "recent_40d_pct": 2.223,
+                               "recent_closed_trades": 30,
+                               "double_cost_pct": -1.725,
+                               "caveat": "Deneysel; 2 kat maliyette ZARARLI."}},
+                "technical": json.loads(json.dumps(self.technical)),
                 "telegram_active": bool(self.telegram),
                 "csv_file": self.log_path.name
             }
