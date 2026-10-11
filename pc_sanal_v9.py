@@ -710,35 +710,17 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
 <div class="grid">
  <div class="card">
   <h2>BTC 15 dakika | DENEYSEL otomatik sanal bot</h2>
-  <p class="muted small">4 saatlik hesaplardan AYRI 1.000 USDT. Son 40 gunluk 2026 tarihsel testinde 30 islem, +%2,22. Masraf 2 katina cikarsa -%1,73. Kâr garantisi yok.</p>
+  <p class="muted small">BTC icin ayri 15DK sanal hesap. Islem kosullari olusunca otomatik LONG/SHORT acar.</p>
   <div id="fast">15 dakikalik mumlar taraniyor...</div><p class="small muted" id="fastnext"></p>
  </div>
  <div class="card">
-  <h2>Hemen gor: 90 saniyelik SANAL teknik test</h2>
-  <p class="muted small">Ilk acilista BTC LONG ve ETH SHORT 100'er USDT ile 90 saniyelik TEKNIK TEST otomatik baslar. STRATEJI SINYALI DEGILDIR. Bu testin sonucu ana bakiyelere eklenmez. Tekrar denemek istersen asagidaki dugmeyi kullan.</p>
+  <h2>Sanal teknik test</h2>
+  <p class="muted small">90 saniyelik emir acma-kapama kontrolu. Strateji kârina eklenmez.</p>
   <button onclick="startTechnical()" id="technicalButton">90 SN SANAL TEST AC</button>
   <p id="tech" class="data muted">Henuz teknik test baslatilmadi.</p>
  </div>
 </div>
-<div style="height:18px"></div>
-<div class="card"><h2>2026 gercek piyasa verisiyle tarihsel sanal test</h2>
-<p class="muted small">Bu bolumdeki sonuclar gecmiste yapilan simülasyondur. Ustteki bakiye ve islemler ise yalnizca bu program acikken ileriye donuk birikir. Iki kat masraf testi dahildir.</p>
-<div class="grid" id="research"></div></div>
-<div style="height:18px"></div>
-<div class="card"><h2>2026 gecmis sanal islemlerinden gercek fiyat ornekleri</h2>
-<p class="muted small">Bunlar daha once Bitget mumlariyla yeniden oynatilmis TARIHSEL emirlerdir; V9 acildiktan sonra canli acilmis emirler DEGIL. Basarili ve basarisiz ornekler birlikte.</p>
-<table><thead><tr><th>UTC tarih</th><th>Coin</th><th>Yon</th><th>Giris → cikis</th><th>Net USDT</th></tr></thead>
-<tbody><tr><td>24.07.2026</td><td>BTC</td><td>SHORT</td><td>64.051 → 65.631</td><td class="red">−5,18</td></tr>
-<tr><td>28.07.2026</td><td>BTC</td><td>SHORT</td><td>63.301 → 64.853</td><td class="red">−5,41</td></tr>
-<tr><td>10.08.2026</td><td>BTC</td><td>SHORT</td><td>64.008 → 63.777</td><td class="green">+0,70</td></tr>
-<tr><td>02.06.2026</td><td>ETH</td><td>SHORT</td><td>1.913 → 1.713</td><td class="green">+12,00</td></tr>
-<tr><td>24.06.2026</td><td>ETH</td><td>SHORT</td><td>1.617 → 1.648</td><td class="red">−2,18</td></tr>
-<tr><td>01.08.2026</td><td>ETH</td><td>SHORT</td><td>1.836 → 1.897</td><td class="red">−5,28</td></tr></tbody></table></div>
-<div style="height:18px"></div>
-<div class="card"><h2>Neden su anda pozisyon acik olmayabilir?</h2>
-<p>Bot sadece <strong>tamamlanan 4 saatlik mumlarda</strong> strateji sinyali arar. Veri veya trend kosullari yoksa emir uydurmaz. BTC Donchian20 2026'nin son ~4 ayinda 6, ETH Donchian55 3 tarihsel islem uretmisti; bu stratejiler sik islem yapmaz.</p>
-<p class="note">Sanal kayitlar bilgisayarindaki <strong>v9_sanal_islemler.csv</strong> dosyasina yazilir. Excel ile acilabilir. Eski V8 kayitlari degistirilmez. Bilgisayar kapanirsa acik islem sonuclari dogrulanamadigi icin kar/zarar sayilmaz.</p>
-<div class="small muted" id="tg"></div></div>
+<div class="small muted" style="margin-top:16px" id="tg"></div>
 <div class="foot">Sanal fiyatlar Bitget USDT-FUTURES genel API'sinden. Tahmini komisyon %0,06 ve olumsuz fiyat kaymasi %0,03 her yon. Funding, gercek emir dolumu ve spread dahil degil. Kar garantisi bulunmaz.</div>
 <script>
 function n(x,d){return Number(x).toLocaleString('tr-TR',{minimumFractionDigits:d,maximumFractionDigits:d})}
@@ -787,11 +769,6 @@ async function render(){
     '<span class="muted">Su an acik teknik test yok.</span>')
    +(outs?'<hr>'+outs:'');
  document.getElementById('technicalButton').disabled=tech.open.length>0;
- document.getElementById('research').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>{
-  const x=d.historical_research[s];
-  return '<div><strong>'+s+'</strong><div class="row"><span class="label">Ocak-Mayis 2026 ('+x.jan_may_trades+' islem)</span><strong class="green">+%'+n(x.jan_may,2)+'</strong></div>'
- +'<div class="row"><span class="label">Haziran-Ekim 2026 ('+x.jun_oct_trades+' islem)</span><strong class="green">+%'+n(x.jun_oct,2)+'</strong></div>'
- +'<div class="row"><span class="label">Son donem 2x maliyet</span><strong class="green">+%'+n(x.double_cost,2)+'</strong></div><p class="muted small">'+x.caveat+'</p></div>'}).join('');
  document.getElementById('tg').textContent=d.telegram_active?'Telegram: onceki klasordeki ayarlar kullaniliyor.':'Telegram: bu klasorde ayar dosyasi yok; panel ve CSV kaydi yine calisir.';
  }catch(e){document.getElementById('stat').textContent='Baglanti bekleniyor'}
 }
