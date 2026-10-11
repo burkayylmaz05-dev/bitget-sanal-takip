@@ -1,0 +1,20 @@
+name: 15m BTC ETH 2026 Frequent Paper Strategy Check
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_15m_candidate.py
+      - .github/workflows/research-15m-candidate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  study:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify code
+        run: python3 -m py_compile research_15m_candidate.py
+      - name: Test frequent BTC ETH paper setup on real 2026 Bitget 15 minute bars
+        run: python3 -u research_15m_candidate.py
