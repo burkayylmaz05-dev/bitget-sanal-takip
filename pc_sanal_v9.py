@@ -21,13 +21,16 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-VERSION = "9.1"
+VERSION = "9.2"
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "v9_sanal_durum.json"
 LOG_PATH = ROOT / "v9_sanal_islemler.csv"
 TELEGRAM_PATH = ROOT / "pc_telegram_ayar.json"
 API = "https://api.bitget.com"
 FOUR = 4 * 60 * 60 * 1000
+FIFTEEN = 15 * 60 * 1000
+FAST_ID = "BTC15M"
+TECH_DURATION_MS = 90_000
 DAY = 24 * 60 * 60 * 1000
 SYMBOLS = ("BTCUSDT", "ETHUSDT")
 LOOKBACK = {"BTCUSDT": 20, "ETHUSDT": 55}
@@ -71,6 +74,10 @@ def utc_ms():
 
 def fresh_4h(now):
     return ((now - 5000) // FOUR - 1) * FOUR
+
+
+def fresh_15m(now):
+    return ((now - 5000) // FIFTEEN - 1) * FIFTEEN
 
 
 def ema(values, length):
@@ -136,6 +143,44 @@ def recent_closed_four(symbol, now):
     if any(b[0] - a[0] != FOUR for a, b in zip(rows, rows[1:])):
         raise RuntimeError("4H veri boslugu")
     return rows
+
+
+def recent_closed_fifteen(now):
+    packet = get_json("/api/v2/mix/market/candles", {
+        "symbol": "BTCUSDT", "productType": "USDT-FUTURES",
+        "granularity": "15m", "limit": "300"})
+    rows = sorted((int(x[0]), *[float(v) for v in x[1:6]])
+                  for x in packet["data"])
+    rows = [r for r in rows if r[0]+FIFTEEN <= now-3000]
+    if len(rows)<285:
+        raise RuntimeError("BTC 15m icin EMA200 mumlari eksik")
+    if any(b[0]-a[0]!=FIFTEEN for a,b in zip(rows, rows[1:])):
+        raise RuntimeError("BTC 15m eksik mum")
+    return rows
+
+
+def fast_signal_from_closed(rows):
+    """15m Donchian55 + EMA50/200 as tested on Bitget, no future candles."""
+    if len(rows)<285:
+        raise RuntimeError("15m mum sayisi yetersiz")
+    closes=[r[4] for r in rows]
+    e50=ema(closes,50)
+    e200=ema(closes,200)
+    c=closes[-1]
+    a=atr(rows)
+    if not(.001<a/c<.055):
+        return None, "15m ATR filtresi"
+    up=e50[-1]>e200[-1] and e50[-1]>e50[-25] and c>e200[-1]
+    down=e50[-1]<e200[-1] and e50[-1]<e50[-25] and c<e200[-1]
+    hi=max(r[2] for r in rows[-56:-1])
+    lo=min(r[3] for r in rows[-56:-1])
+    d=1 if up and c>hi and c-hi<1.5*a else (
+        -1 if down and c<lo and lo-c<1.5*a else 0)
+    if not d:
+        return None, "15m trend / kirilim sinyali yok"
+    return {"direction":d,"reference":c,"atr":a,
+            "stop":c-d*2.7*a,"trail_atr":3.2,
+            "signal_at":rows[-1][0]+FIFTEEN}, "15m ADAY"
 
 
 def daily_closed(symbol, now, limit_days=620):
