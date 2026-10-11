@@ -1,0 +1,20 @@
+name: Bitget 2025-2026 Cost-Sensitivity Strategy Selection
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_v102_4h_selector.py
+      - .github/workflows/research-v102-4h-selector.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify safe no-orders strategy code
+        run: python3 -m py_compile research_v102_4h_selector.py
+      - name: Run 2025 development and 2026 dated BTC ETH validations
+        run: python3 -u research_v102_4h_selector.py
