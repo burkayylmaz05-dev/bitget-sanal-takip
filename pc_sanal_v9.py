@@ -711,7 +711,7 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
  <div class="card">
   <h2>BTC 15 dakika | DENEYSEL otomatik sanal bot</h2>
   <p class="muted small">4 saatlik hesaplardan AYRI 1.000 USDT. Son 40 gunluk 2026 tarihsel testinde 30 islem, +%2,22. Masraf 2 katina cikarsa -%1,73. Kâr garantisi yok.</p>
-  <div id="fast">15 dakikalik mumlar taraniyor...</div>
+  <div id="fast">15 dakikalik mumlar taraniyor...</div><p class="small muted" id="fastnext"></p>
  </div>
  <div class="card">
   <h2>Hemen gor: 90 saniyelik SANAL teknik test</h2>
@@ -746,6 +746,7 @@ function sign(x){return (x>=0?'+':'')+n(x,2)}
 function dtfmt(x){try{return new Date(x).toLocaleString('tr-TR')}catch(e){return x}}
 function sHtml(sym,d){
  let a=d.accounts[sym],q=d.quotes[sym],p=a.position;let diff=a.equity-1000;
+ let latest=(a.last_reason||'').replace('Eski mum atlandi, gecmis emir acilmadi','Yeni 4H kapanisi bekleniyor');
  let cls=diff>=0?'green':'red';let price=q?n(q.price,2)+' USDT':'Veri bekleniyor';
  return '<div class="card"><div class="row"><h2>'+sym+'</h2><span class="muted small">'+(sym==='BTCUSDT'?'Donchian20 4H':'Donchian55 4H')+'</span></div>'
  +'<div class="label">Canli Bitget fiyati</div><div class="money">'+price+'</div>'
@@ -756,7 +757,7 @@ function sHtml(sym,d){
  +(p?'<div class="tag">SANAL '+(p.direction===1?'LONG':'SHORT')+' ACIK</div>'
  +'<p class="data">Giris: <strong>'+n(p.entry,2)+'</strong> | Stop: <strong>'+n(p.stop,2)+'</strong></p>'
  :'<div class="muted">Suan acik sanal pozisyon yok.</div>')
- +'<p class="muted small">Son kontrol: '+a.last_reason+'</p></div>';
+ +'<p class="muted small">Son kontrol: '+latest+'</p></div>';
 }
 async function render(){
  try{
@@ -769,6 +770,7 @@ async function render(){
  document.getElementById('healthinfo').textContent=['BTCUSDT','ETHUSDT'].map(s=>s.replace('USDT','')+': '+(d.diagnostics[s].age_seconds===null?'fiyat gelmedi':d.diagnostics[s].age_seconds+' sn')).join(' | ') + (d.status.error ? ' | HATA: '+d.status.error : '');
  document.getElementById('coins').innerHTML=['BTCUSDT','ETHUSDT'].map(s=>sHtml(s,d)).join('');
  const a=d.accounts.BTC15M,p=a.position,net=a.equity-1000;
+ document.getElementById('fastnext').textContent='Sonraki 15DK kapanisi: '+dtfmt(d.status.next_15m_at);
  document.getElementById('fast').innerHTML=
   '<div class="row"><span class="label">Sanal bakiye</span><strong>'+n(a.equity,2)+' USDT</strong></div>'
   +'<div class="row"><span class="label">Gerceklesen sanal net</span><strong class="'+(net>=0?'green':'red')+'">'+sign(net)+' USDT</strong></div>'
