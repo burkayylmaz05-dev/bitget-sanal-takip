@@ -1,0 +1,20 @@
+name: Continuous ETH 4H EMA 2022 to 2026 No Half-Year Resets
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_eth_continuous_no_reset.py
+      - .github/workflows/research-eth-continuous.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Python compile
+        run: python3 -m py_compile research_eth_continuous_no_reset.py
+      - name: Actual Bitget continuous 2022 to 2026 no reset cost audit
+        run: python3 -u research_eth_continuous_no_reset.py
