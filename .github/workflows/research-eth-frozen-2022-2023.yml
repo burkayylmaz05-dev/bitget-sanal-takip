@@ -1,0 +1,20 @@
+name: ETH EMA50 200 Frozen 2022-23 Robustness
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_eth_frozen_2022_2023.py
+      - .github/workflows/research-eth-frozen-2022-2023.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check syntax
+        run: python3 -m py_compile research_eth_frozen_2022_2023.py
+      - name: Audit frozen ETH EMA 4H on 2022-2023 actual Bitget history
+        run: python3 -u research_eth_frozen_2022_2023.py
