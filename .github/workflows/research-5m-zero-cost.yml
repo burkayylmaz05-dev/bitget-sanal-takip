@@ -1,0 +1,20 @@
+name: BTC ETH 5 Minute Raw Edge vs Execution Cost Audit
+'on':
+  push:
+    branches: [main]
+    paths:
+      - research_5m_zero_cost_vs_actual.py
+      - .github/workflows/research-5m-zero-cost.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax check
+        run: python3 -m py_compile research_5m_zero_cost_vs_actual.py
+      - name: Audit 40 days of BTC ETH five minute real bars with no fee normal and double fee
+        run: python3 -u research_5m_zero_cost_vs_actual.py
