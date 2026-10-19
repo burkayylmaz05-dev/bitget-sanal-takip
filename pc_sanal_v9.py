@@ -803,7 +803,7 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
 @media(max-width:540px){body{padding:15px}h1{font-size:20px}.money{font-size:26px}}
 </style></head>
 <body>
-<div class="top"><div><h1>Bitget BTC + ETH | Sanal Islem Paneli <span class="muted small">V9.2</span></h1>
+<div class="top"><div><h1>Bitget BTC + ETH | Sanal Islem Paneli <span class="muted small">V9.3</span></h1>
 <div class="muted small">Gercek hesap baglantisi yok. Para kullanilmaz, borsaya emir gitmez.</div></div>
 <div><span class="tag" id="stat">Baglaniyor</span><div class="small muted" id="refreshed"></div><div class="small muted" id="nextcheck"></div><div class="small muted" id="healthinfo"></div></div></div>
 <div class="grid" id="coins"><div class="card">Bitget verisi bekleniyor...</div></div>
