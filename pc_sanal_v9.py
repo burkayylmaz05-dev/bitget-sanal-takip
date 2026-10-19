@@ -514,6 +514,29 @@ class Book:
                              "belirsiz, kar/zarar hesaplanmadi.")
             account["last_quote_at"] = stamp
             if symbol == "BTCUSDT":
+                quick = self.accounts[QUICK_ID]
+                qp = quick["position"]
+                old_quick_tick = quick.get("last_quote_at")
+                if qp and old_quick_tick and now - old_quick_tick > MAX_TICK_GAP_MS:
+                    self._log("DOGRULANAMADI", QUICK_ID, qp, None, None,
+                              "Hizli sanal takip veri boslugu")
+                    quick["unverified"] += 1
+                    quick["position"] = None
+                    quick["last_reason"] = "Veri kesildi; kar/zarar bilinmiyor"
+                quick["last_quote_at"] = stamp
+                qp = quick["position"]
+                if qp:
+                    d = qp["direction"]
+                    hit_stop = raw <= qp["stop"] if d == 1 else raw >= qp["stop"]
+                    hit_target = raw >= qp["target"] if d == 1 else raw <= qp["target"]
+                    if hit_stop:
+                        self._close(QUICK_ID,
+                                    min(raw, qp["stop"]) if d == 1 else max(raw, qp["stop"]),
+                                    "HIZLI STOP", now)
+                    elif hit_target:
+                        self._close(QUICK_ID, qp["target"], "HIZLI HEDEF", now)
+                    elif now >= qp["deadline_ms"]:
+                        self._close(QUICK_ID, raw, "HIZLI 5 DAKIKA", now)
                 fast = self.accounts[FAST_ID]
                 fp = fast["position"]
                 old_fast_tick = fast.get("last_quote_at")
