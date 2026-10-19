@@ -21,7 +21,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 
-VERSION = "9.2"
+VERSION = "9.3"
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "v9_sanal_durum.json"
 LOG_PATH = ROOT / "v9_sanal_islemler.csv"
@@ -30,6 +30,10 @@ API = "https://api.bitget.com"
 FOUR = 4 * 60 * 60 * 1000
 FIFTEEN = 15 * 60 * 1000
 FAST_ID = "BTC15M"
+QUICK_ID = "BTC_HIZLI"
+QUICK_HOLD_MS = 5 * 60 * 1000
+QUICK_REENTRY_MS = 15 * 60 * 1000
+QUICK_DAILY_CAP = 8
 TECH_DURATION_MS = 90_000
 DAY = 24 * 60 * 60 * 1000
 SYMBOLS = ("BTCUSDT", "ETHUSDT")
@@ -293,8 +297,18 @@ class Book:
                 "last_bar": fresh_15m(self.now()), "last_quote_at": None,
                 "last_signal": None, "last_reason": "15m kapanisi bekleniyor",
                 "next_id": 1}
+        if QUICK_ID not in self.accounts:
+            self.accounts[QUICK_ID] = {
+                "equity": SEED, "peak": SEED, "worst_dd": 0.,
+                "wins": 0, "losses": 0, "closed": 0,
+                "unverified": 0, "position": None,
+                "last_bar": fresh_15m(self.now()), "last_quote_at": None,
+                "last_signal": None, "last_reason": "Hizli sanal giris bekleniyor",
+                "next_id": 1, "next_allowed_ms": 0,
+                "entry_day": "", "entries_today": 0,
+            }
         if loaded:
-            for sym in (*SYMBOLS, FAST_ID):
+            for sym in (*SYMBOLS, FAST_ID, QUICK_ID):
                 acc = self.accounts[sym]
                 if acc["position"] is not None:
                     p = acc["position"]
@@ -305,6 +319,70 @@ class Book:
                     self._notify(sym + " SANAL POZISYON DOGRULANAMADI: "
                                  "Bot durmustu; kar veya zarar yazilmadi.")
         self.save()
+
+
+    def on_quick_ready(self, bars, now, price, quote_at):
+        """Experimental immediate PAPER trade, separate from research strategies."""
+        with self.lock:
+            acc = self.accounts[QUICK_ID]
+            if acc["position"] is not None or now < acc.get("next_allowed_ms", 0):
+                return False
+            day = dt.datetime.fromtimestamp(now/1000, dt.timezone.utc).strftime("%Y-%m-%d")
+            if acc.get("entry_day") != day:
+                acc["entry_day"] = day
+                acc["entries_today"] = 0
+            if acc["entries_today"] >= QUICK_DAILY_CAP:
+                acc["last_reason"] = "Gunluk 8 hizli sanal islem limiti doldu"
+                return False
+            if len(bars) < 35 or bars[-1][0] != fresh_15m(now):
+                return False
+            if price is None or not math.isfinite(price) or price <= 0:
+                return False
+            if quote_at is None or not -CLOCK_SKEW_MS <= now - quote_at <= FRESH_TICK_MS:
+                return False
+            if any(y[0]-x[0] != FIFTEEN for x,y in zip(bars,bars[1:])):
+                return False
+            closes = [r[4] for r in bars]
+            current_atr = atr(bars)
+            if not math.isfinite(current_atr) or current_atr <= 0:
+                return False
+            # A quick exercise starts without a rare breakout/crossover trigger.
+            # Direction is based ONLY on completed 15-minute candles.
+            direction = 1 if ema(closes,8)[-1] >= ema(closes,21)[-1] else -1
+            entry = price * (1 + direction * SLIP)
+            distance = max(1.5 * current_atr, price * .001)
+            if distance >= price * .08:
+                return False
+            stop = entry - direction * distance
+            target = entry + direction * 1.5 * distance
+            cost_buffer = 2 * entry * (FEE + SLIP)
+            quantity = min(acc["equity"]/entry,
+                           acc["equity"] * RISK / (distance + cost_buffer))
+            if not 0 < quantity * entry <= acc["equity"] + .01:
+                return False
+            p = {
+                "id": f"{QUICK_ID}-{acc['next_id']:05d}",
+                "direction": direction, "entry": entry, "quantity": quantity,
+                "stop": stop, "target": target,
+                "opened_ms": now, "deadline_ms": now + QUICK_HOLD_MS,
+                "strategy": "BTC 15m EMA8/21 HIZLI DENEYSEL",
+                "signal_at": bars[-1][0] + FIFTEEN,
+            }
+            acc["position"] = p
+            acc["next_id"] += 1
+            acc["entries_today"] += 1
+            acc["next_allowed_ms"] = now + QUICK_REENTRY_MS
+            acc["last_bar"] = bars[-1][0]
+            acc["last_signal"] = iso(now)
+            acc["last_reason"] = "HIZLI SANAL LONG acildi" if direction == 1 else "HIZLI SANAL SHORT acildi"
+            self._log("SANAL_ACILIS", QUICK_ID, p, None, None,
+                      "Deneysel hizli islem; karlilik kanitlanmadi")
+            self.save()
+            self._notify(
+                f"BTC HIZLI DENEYSEL SANAL {'LONG' if direction == 1 else 'SHORT'} ACILDI\\n"
+                f"Giris: {entry:.2f} | Stop: {stop:.2f} | Hedef: {target:.2f}\\n"
+                "5 dakika sonra veya stop/hedefte kapanir. GERCEK EMIR YOK.")
+            return True
 
     def _load_telegram(self):
         # Reuse previous bot's PC-only Telegram config without asking for keys,
