@@ -2,10 +2,10 @@
 setlocal EnableExtensions
 chcp 65001 >nul
 cd /d "%~dp0"
-title Bitget BTC ETH - Sanal Islem Paneli V9.2
+title Bitget BTC ETH - Sanal Islem Paneli V9.3
 
 echo ============================================================
-echo   BITGET BTC / ETH SANAL BOT V9.2 - GERCEK EMIR YOK
+echo   BITGET BTC / ETH SANAL BOT V9.3 - GERCEK EMIR YOK
 echo ============================================================
 echo.
 echo Bu program kendi bilgisayarinda calisir.
