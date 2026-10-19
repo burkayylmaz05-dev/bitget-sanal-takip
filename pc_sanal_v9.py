@@ -821,6 +821,14 @@ button{cursor:pointer;color:#fff;background:#304e67;border:0;border-radius:9px;p
   <p id="tech" class="data muted">Henuz teknik test baslatilmadi.</p>
  </div>
 </div>
+<div style="height:18px"></div>
+<div class="grid">
+ <div class="card">
+  <h2>BTC HIZLI | ANINDA otomatik SANAL islem</h2>
+  <p class="muted small">Guncel fiyat ile ilk acilista hemen LONG/SHORT acar. 5 dk sonra kapatir, 15 dakikada bir tekrar deneyebilir. Gunde en fazla 8 sanal islem. Deneysel, kar garantisi YOK.</p>
+  <div id="quick">Taze BTC fiyati ve kapanmis 15m mum bekleniyor...</div>
+ </div>
+</div>
 <div class="small muted" style="margin-top:16px" id="tg"></div>
 <div class="foot">Sanal fiyatlar Bitget USDT-FUTURES genel API'sinden. Tahmini komisyon %0,06 ve olumsuz fiyat kaymasi %0,03 her yon. Funding, gercek emir dolumu ve spread dahil degil. Kar garantisi bulunmaz.</div>
 <script>
@@ -860,6 +868,16 @@ async function render(){
   +'<div class="row"><span class="label">Kapanan / kazanan / kaybeden</span><strong>'+a.closed+' / '+a.wins+' / '+a.losses+'</strong></div>'
   +(p?'<p class="tag">15DK SANAL '+(p.direction===1?'LONG':'SHORT')+' ACIK</p><p>Giris: '+n(p.entry,2)+' | Stop: '+n(p.stop,2)+'</p>':'<p class="muted">15DK strateji sinyali bekleniyor.</p>')
   +'<p class="muted small">Son kontrol: '+a.last_reason+'</p>';
+ const q=d.accounts.BTC_HIZLI, qp=q.position, qnet=q.equity-1000;
+ document.getElementById('quick').innerHTML =
+  '<div class="row"><span class="label">Sanal bakiye</span><strong>'+n(q.equity,2)+' USDT</strong></div>'
+  +'<div class="row"><span class="label">Sanal kar/zarar</span><strong class="'+(qnet>=0?'green':'red')+'">'+sign(qnet)+' USDT</strong></div>'
+  +'<div class="row"><span class="label">Kapanan / kazanan / kaybeden</span><strong>'+q.closed+' / '+q.wins+' / '+q.losses+'</strong></div>'
+  +'<div class="row"><span class="label">Bugunku sanal giris</span><strong>'+q.entries_today+' / 8</strong></div>'
+  +(qp?'<p class="tag">ACIK SANAL '+(qp.direction===1?'LONG':'SHORT')+'</p>'
+    +'<p class="data">Giris: '+n(qp.entry,2)+' | Stop: '+n(qp.stop,2)+' | Hedef: '+n(qp.target,2)+'</p>'
+    :'<p class="muted">Su an hizli sanal pozisyon kapali.</p>')
+  +'<p class="muted small">Durum: '+q.last_reason+'</p>';
  const tech=d.technical;
  const outs=tech.history.slice(-4).reverse().map(x=>
   x.net===null?'<div class="small muted">'+x.reason+'</div>':
@@ -934,13 +952,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 def main():
-    print("\nBITGET SANAL PANEL V9.2 - GERCEK EMIR GONDERMEZ", flush=True)
+    print("\nBITGET SANAL PANEL V9.3 - HIZLI SANAL ISLEM - GERCEK EMIR YOK", flush=True)
     print("Bitget public BTC ETH verisi | BTC Donchian20 / ETH Donchian55 4H", flush=True)
     try:
         server = http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     except OSError:
         print("Panel zaten acik olabilir: http://127.0.0.1:%d" % PORT)
-        webbrowser.open_new_tab("http://127.0.0.1:%d/?v=9.2" % PORT)
+        webbrowser.open_new_tab("http://127.0.0.1:%d/?v=9.3" % PORT)
         return
     # Lock port BEFORE loading state: second launcher must not mark an
     # already running paper position as unverified and overwrite disk state.
@@ -954,12 +972,13 @@ def main():
     print("PANEL: http://127.0.0.1:%d/" % PORT, flush=True)
     print("Excel islemler: %s" % LOG_PATH.name, flush=True)
     threading.Thread(target=lambda: webbrowser.open_new_tab(
-        "http://127.0.0.1:%d/?v=9.2&fresh=%d" % (PORT, int(time.time()))),
+        "http://127.0.0.1:%d/?v=9.3&fresh=%d" % (PORT, int(time.time()))),
         daemon=True).start()
     daily_cache = {}
     next_tickers = 0
     next_scan = 0
     next_fast_scan = 0
+    quick_bars = None
     # A one-time, explicitly labeled paper execution demonstration.
     # Never repeat after it finishes or becomes unverifiable, and never
     # credit its PnL to an automated trading strategy or account.
@@ -993,18 +1012,26 @@ def main():
                               "sanal LONG/SHORT sonuclari gorunecek.", flush=True)
             if now >= next_fast_scan:
                 next_fast_scan = now + 8_000
-                if fresh_15m(now) > book.accounts[FAST_ID]["last_bar"]:
+                if (quick_bars is None or fresh_15m(now) > quick_bars[-1][0]
+                        or fresh_15m(now) > book.accounts[FAST_ID]["last_bar"]):
                     try:
                         bars = recent_closed_fifteen(utc_ms())
+                        quick_bars = bars
                         quote = book.prices.get("BTCUSDT")
                         stamp = book.accounts["BTCUSDT"].get("last_quote_at")
-                        book.on_fast_15m_close(
-                            bars,utc_ms(),quote["price"] if quote else None,stamp)
+                        if fresh_15m(now) > book.accounts[FAST_ID]["last_bar"]:
+                            book.on_fast_15m_close(
+                                bars, utc_ms(), quote["price"] if quote else None, stamp)
                     except Exception as exc:
                         with book.lock:
                             book.info["error"] = "BTC 15m: " + str(exc)[:110]
                         print("BTC 15m kontrol:",type(exc).__name__,
                               str(exc)[:130],flush=True)
+                if quick_bars is not None:
+                    quote = book.prices.get("BTCUSDT")
+                    stamp = book.accounts["BTCUSDT"].get("last_quote_at")
+                    book.on_quick_ready(quick_bars, utc_ms(),
+                                        quote["price"] if quote else None, stamp)
             if now >= next_scan:
                 next_scan = now + 15_000
                 for sym in SYMBOLS:
