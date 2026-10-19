@@ -52,3 +52,32 @@ jobs:
                 "signal",why,"direction",ev and ev['direction'])
           assert len(fast)>=285
           PY
+      - name: Confirm immediate BTC simulated trade with real Bitget quotes
+        run: |
+          python3 - <<'PY'
+          from tempfile import TemporaryDirectory
+          import time
+          import pc_sanal_v9 as p
+          opened = False
+          for attempt in range(4):
+              now = p.utc_ms()
+              bars = p.recent_closed_fifteen(now)
+              px, stamp = p.ticker("BTCUSDT")
+              with TemporaryDirectory() as temp:
+                  bot = p.Book(folder=temp, now=p.utc_ms)
+                  opened = bot.on_quick_ready(bars, p.utc_ms(), px, stamp)
+                  if opened:
+                      acc = bot.accounts[p.QUICK_ID]
+                      trade = acc["position"]
+                      print("INSTANT PAPER OPENED",
+                            "LONG" if trade["direction"] == 1 else "SHORT",
+                            "entry", round(trade["entry"],2),
+                            "stop", round(trade["stop"],2),
+                            "quantity", round(trade["quantity"],6),
+                            "NO REAL ORDER")
+                      assert trade["quantity"]*trade["entry"] <= 1000.01
+                      assert bot.accounts["BTCUSDT"]["closed"] == 0
+                      break
+              time.sleep(5)
+          assert opened, "Actual closed bar or fresh ticker was unavailable"
+          PY
