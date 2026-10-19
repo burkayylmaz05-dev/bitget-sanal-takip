@@ -124,7 +124,7 @@ class V9Tests(unittest.TestCase):
         obj = self.book.snapshot()
         self.assertFalse(obj['diagnostics']['ETHUSDT']['fresh'])
         self.assertIsNone(obj['diagnostics']['ETHUSDT']['age_seconds'])
-        self.assertEqual(obj['version'],'9.2')
+        self.assertEqual(obj['version'],'9.3')
 
     def test_manual_90_second_paper_test_opens_and_closes_independently(self):
         self.book.on_quote('BTCUSDT',83000.,self.now,self.now)
@@ -188,9 +188,9 @@ class V9Tests(unittest.TestCase):
         self.assertIsNone(a2['position'])
         self.assertEqual(a2['equity'],1000.)
 
-    def test_versioned_browser_url_returns_fresh_v92_html(self):
+    def test_versioned_browser_url_returns_fresh_v93_html(self):
         # Old tab on / can keep V9.1 static HTML. New launcher must open
-        # /?v=9.2 with a cache buster and serve HTML, never a JSON document.
+        # /?v=9.3 with a cache buster and serve HTML, never a JSON document.
         import http.server
         import threading
         import urllib.request
@@ -200,14 +200,14 @@ class V9Tests(unittest.TestCase):
         thread.start()
         try:
             root=f"http://127.0.0.1:{server.server_address[1]}"
-            with urllib.request.urlopen(root+"/?v=9.2&fresh=123",timeout=4) as r:
+            with urllib.request.urlopen(root+"/?v=9.3&fresh=123",timeout=4) as r:
                 html=r.read().decode("utf-8")
                 self.assertIn("text/html",r.headers.get("Content-Type",""))
-            self.assertIn("V9.2",html)
+            self.assertIn("V9.3",html)
             self.assertIn("15 dakika",html)
             with urllib.request.urlopen(root+"/api/state?test=1",timeout=4) as r:
                 data=json.load(r)
-            self.assertEqual(data["version"],"9.2")
+            self.assertEqual(data["version"],"9.3")
             self.assertIn("BTC15M",data["accounts"])
         finally:
             server.shutdown()
@@ -223,6 +223,61 @@ class V9Tests(unittest.TestCase):
         self.assertNotIn('id="research"',html)
         self.assertNotIn("getElementById('research')",html)
         self.assertNotIn('24.07.2026',html)
+
+    def _quick_rows(self):
+        latest = app.fresh_15m(self.now)
+        start = latest - 59 * app.FIFTEEN
+        result = []
+        for i in range(60):
+            price = 100.0 + i * .07
+            result.append((start + i * app.FIFTEEN, price,
+                           price + .18, price - .18, price, 100.0))
+        return result
+
+    def test_quick_paper_opens_immediately_and_stops_with_real_costs(self):
+        rows = self._quick_rows()
+        px = rows[-1][4]
+        self.book.on_quote('BTCUSDT', px, self.now, self.now)
+        ok = self.book.on_quick_ready(rows, self.now, px, self.now)
+        self.assertTrue(ok)
+        quick = self.book.accounts[app.QUICK_ID]
+        pos = quick['position']
+        self.assertIsNotNone(pos)
+        self.assertEqual(pos['direction'], 1)
+        self.assertLessEqual(pos['quantity'] * pos['entry'], 1000.01)
+        self.assertEqual(quick['entries_today'], 1)
+        self.assertFalse(self.book.on_quick_ready(rows, self.now, px, self.now))
+        self.assertEqual(quick['next_id'], 2)
+        self.book.on_quote('BTCUSDT', pos['stop']-1.0, self.now+20000, self.now+20000)
+        self.assertIsNone(quick['position'])
+        self.assertEqual(quick['closed'], 1)
+        self.assertEqual(quick['losses'], 1)
+        self.assertLess(quick['equity'], 1000)
+        self.assertEqual(self.book.accounts['BTCUSDT']['equity'], 1000)
+        self.assertEqual(self.book.accounts['BTC15M']['equity'], 1000)
+        contents = (self.path/app.LOG_PATH.name).read_text(encoding='utf-8-sig')
+        self.assertIn('BTC_HIZLI', contents)
+        self.assertFalse(self.book.on_quick_ready(rows, self.now+30000, px, self.now+30000))
+
+    def test_quick_paper_requires_fresh_real_quote_and_closed_candles(self):
+        rows = self._quick_rows()
+        px = rows[-1][4]
+        self.assertFalse(self.book.on_quick_ready(rows, self.now, px, self.now-180000))
+        self.assertFalse(self.book.on_quick_ready(rows[:-1], self.now, px, self.now))
+        self.assertIsNone(self.book.accounts[app.QUICK_ID]['position'])
+        self.assertEqual(self.book.accounts[app.QUICK_ID]['closed'], 0)
+
+    def test_quick_paper_restart_keeps_no_invented_pnl(self):
+        rows = self._quick_rows()
+        px = rows[-1][4]
+        self.assertTrue(self.book.on_quick_ready(rows, self.now, px, self.now))
+        self.assertIsNotNone(self.book.accounts[app.QUICK_ID]['position'])
+        restarted = app.Book(folder=self.path, now=lambda: self.now+30000)
+        account = restarted.accounts[app.QUICK_ID]
+        self.assertEqual(account['unverified'], 1)
+        self.assertIsNone(account['position'])
+        self.assertEqual(account['equity'], 1000.)
+        self.assertEqual(account['entries_today'], 1)
 
     def test_no_exchange_order_api_and_no_credentials_required(self):
         source=(Path(__file__).resolve().parent.parent/'pc_sanal_v9.py').read_text()
