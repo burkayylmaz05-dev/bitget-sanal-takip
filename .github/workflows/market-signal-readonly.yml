@@ -15,6 +15,7 @@ jobs:
       - name: Read current Bitget futures data without placing orders
         shell: bash
         run: |
+          python3 - <<'PY'
           import datetime as dt
           import json, math, statistics, time, urllib.parse, urllib.request
           BASE="https://api.bitget.com/api/v2/mix/market/"
@@ -83,3 +84,4 @@ jobs:
               try:print("SCAN_RESULT "+json.dumps(scan(sym),separators=(",",":")),flush=True)
               except Exception as e:print("SCAN_ERROR "+sym+" "+type(e).__name__+": "+str(e),flush=True)
           
+          PY
