@@ -1,0 +1,30 @@
+name: Bitget Confirmed Signal Snapshot (read-only)
+'on':
+  push:
+    branches: [main]
+    paths:
+      - tools/bitget_confirmed_signal_scan.py
+      - .github/workflows/bitget-confirmed-signal.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '35 * * * *'
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate scanner syntax and no exchange order access
+        run: |
+          python3 -m py_compile tools/bitget_confirmed_signal_scan.py
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('tools/bitget_confirmed_signal_scan.py').read_text()
+          for forbidden in ('/api/v2/mix/order','/api/v3/trade/place-order','/api/v2/mix/account','TELEGRAM_BOT_TOKEN'):
+              assert forbidden not in s, forbidden
+          print('Read-only scanner; no order endpoints or credentials')
+          PY
+      - name: Fetch BTC ETH 5m 15m 1h 4h and evaluate strong signal
+        run: python3 tools/bitget_confirmed_signal_scan.py
