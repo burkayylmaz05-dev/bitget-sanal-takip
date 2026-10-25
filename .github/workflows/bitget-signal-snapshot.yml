@@ -1,0 +1,63 @@
+name: Read-only BTC ETH strong signal snapshot
+
+'on':
+  push:
+    paths:
+      - '.github/workflows/bitget-signal-snapshot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check 5m 15m 1h 4h closed candles and live quote
+        run: |
+          python - <<'PY'
+          import datetime as dt
+          import json
+          import time
+          from bitget_sinyal_takip import analyze, candles, http_json, BASE
+          for symbol in ('BTCUSDT','ETHUSDT'):
+              try:
+                  signal, trends, reason = analyze(symbol)
+                  rows15 = candles(symbol, '15m')
+                  v = rows15[-1][5]
+                  vmean = sum(x[5] for x in rows15[-21:-1]) / 20
+                  ratio15 = v/vmean if vmean else 0
+                  raw = http_json(BASE+'/api/v2/mix/market/ticker',
+                                  {'symbol':symbol,'productType':'USDT-FUTURES'})
+                  ticker = raw['data']
+                  if isinstance(ticker,list): ticker=ticker[0]
+                  price = float(ticker['lastPr'])
+                  stamp = int(ticker.get('ts') or raw.get('requestTime') or 0)
+                  now = int(time.time()*1000)
+                  if stamp <= 0 or abs(now-stamp) > 60000:
+                      raise RuntimeError('Ticker too old')
+                  if signal and ratio15 >= 1.15:
+                      direction=signal['direction']
+                      if abs(price-signal['entry']) > .3*signal['atr']:
+                          reason='Live price moved too far from breakout'
+                          signal=None
+                      else:
+                          risk=abs(signal['entry']-signal['stop'])
+                          result={'symbol':symbol,'direction':direction,
+                                  'price':price,'quote_utc':dt.datetime.fromtimestamp(stamp/1000,dt.timezone.utc).isoformat(),
+                                  'entry_condition':'5m breakout holds, 5m volume >= 1.35x, 15m volume >= 1.15x, aligned 5m/15m/1h/4h trends',
+                                  'stop':round(price-risk if direction=='LONG' else price+risk,2),
+                                  'target':round(price+2.2*risk if direction=='LONG' else price-2.2*risk,2),
+                                  'rsi':round(signal['rsi'],1),
+                                  'vol5':round(signal['volume_ratio'],2),
+                                  'vol15':round(ratio15,2),
+                                  'trends':trends}
+                          print('STRONG_SIGNAL='+json.dumps(result,ensure_ascii=False))
+                  if not signal or ratio15 < 1.15:
+                      print('NO_SIGNAL='+json.dumps({'symbol':symbol,'reason':reason if not signal else '15m volume weak',
+                              'trends':trends,'vol15':round(ratio15,2),'quote_utc':dt.datetime.fromtimestamp(stamp/1000,dt.timezone.utc).isoformat()},ensure_ascii=False))
+              except Exception as exc:
+                  print('DATA_ERROR='+json.dumps({'symbol':symbol,'error':str(exc)},ensure_ascii=False))
+          PY
